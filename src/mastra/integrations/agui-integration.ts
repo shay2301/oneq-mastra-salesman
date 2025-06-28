@@ -1,5 +1,5 @@
-// AG-UI Integration Layer for OneQ Salesman Agent v2.0
-// Updated for structured JSON output and executive summary table
+// AG-UI Integration Layer for OneQ Salesman Agent v3.0
+// Enhanced with tool chain transparency, consistency validation, and reasoning trace
 
 export interface AGUIEvent {
   type: string;
@@ -7,6 +7,58 @@ export interface AGUIEvent {
   timestamp?: number;
   component?: string;
   props?: Record<string, any>;
+}
+
+// NEW: Tool chain execution results for transparency
+export interface ToolChainResults {
+  normalization: {
+    backendHours: number;
+    complexity: 'simple' | 'medium' | 'complex';
+    businessModel: 'saas' | 'ecommerce' | 'b2b' | 'mobile';
+    features: string[];
+    confidence: 'high' | 'medium' | 'low';
+  };
+  diyCalculation: {
+    totalCost: number;
+    totalHours: number;
+    timeline: string;
+    confidence: 'high' | 'medium' | 'low';
+  };
+  revenueProjection: {
+    monthlyPotential: number;
+    marketBasis: string;
+    businessModel: string;
+    confidence: 'high' | 'medium' | 'low';
+  };
+  pricing: {
+    oneQPrice: number;
+    savingsPercentage: number;
+    complexityMultiplier: number;
+    confidence: 'high' | 'medium' | 'low';
+  };
+  validation: {
+    consistencyScore: number;
+    adjustments: Array<{
+      field: string;
+      originalValue: number;
+      adjustedValue: number;
+      reason: string;
+    }>;
+    overallConfidence: 'high' | 'medium' | 'low';
+  };
+}
+
+// NEW: Reasoning trace for decision transparency
+export interface ReasoningTrace {
+  steps: Array<{
+    step: string;
+    reasoning: string;
+    decision: string;
+    confidence: number;
+  }>;
+  finalDecision: string;
+  overallConfidence: number;
+  transparencyLevel: 'full' | 'summary' | 'minimal';
 }
 
 // Updated interfaces to match the new agent schema
@@ -96,6 +148,22 @@ export interface ExecutiveSummaryTable {
   immediateAction: string;
 }
 
+// ENHANCED: Sales agent response with transparency data
+export interface EnhancedSalesAgentResponse {
+  theOffer: TheOffer;
+  savingsBreakdown: SavingsBreakdown;
+  costOfDelay: CostOfDelay;
+  teamBreakdown: TeamBreakdown;
+  modularOptions: ModularOptions;
+  executiveSummaryTable: ExecutiveSummaryTable;
+  // NEW: Transparency and validation data
+  toolChainResults?: ToolChainResults;
+  reasoningTrace?: ReasoningTrace;
+  overallConfidence?: number;
+  calculationTimestamp?: number;
+}
+
+// Legacy interface for backward compatibility
 export interface SalesAgentResponse {
   theOffer: TheOffer;
   savingsBreakdown: SavingsBreakdown;
@@ -107,6 +175,93 @@ export interface SalesAgentResponse {
 
 export class AGUIEventEmitter {
   private events: AGUIEvent[] = [];
+  
+  // NEW: Emit tool chain transparency component
+  emitToolChainTransparency(toolChainResults: ToolChainResults): AGUIEvent {
+    const event: AGUIEvent = {
+      type: "generative_ui",
+      component: "CalculationTransparency",
+      props: {
+        toolChainResults,
+        showDetailedBreakdown: true,
+        showConfidenceLevels: true,
+        allowDrillDown: true,
+        interactive: true
+      },
+      timestamp: Date.now()
+    };
+    
+    this.events.push(event);
+    return event;
+  }
+  
+  // NEW: Emit consistency confidence indicator
+  emitConsistencyConfidence(validationResults: ToolChainResults['validation']): AGUIEvent {
+    const event: AGUIEvent = {
+      type: "confidence_indicator",
+      component: "ConsistencyConfidence",
+      props: {
+        consistencyScore: validationResults.consistencyScore,
+        adjustments: validationResults.adjustments,
+        overallConfidence: validationResults.overallConfidence,
+        calculationMethodology: "Standardized tool chain with validation",
+        showDetails: true,
+        trustIndicator: validationResults.consistencyScore >= 90 ? "high" : 
+                       validationResults.consistencyScore >= 70 ? "medium" : "low"
+      },
+      timestamp: Date.now()
+    };
+    
+    this.events.push(event);
+    return event;
+  }
+  
+  // NEW: Emit reasoning trace for decision transparency
+  emitReasoningTrace(reasoningTrace: ReasoningTrace): AGUIEvent {
+    const event: AGUIEvent = {
+      type: "generative_ui", 
+      component: "ReasoningTrace",
+      props: {
+        steps: reasoningTrace.steps,
+        finalDecision: reasoningTrace.finalDecision,
+        overallConfidence: reasoningTrace.overallConfidence,
+        transparencyLevel: reasoningTrace.transparencyLevel,
+        showThinkingProcess: true,
+        collapsible: true,
+        interactive: true
+      },
+      timestamp: Date.now()
+    };
+    
+    this.events.push(event);
+    return event;
+  }
+  
+  // NEW: Real-time tool execution progress
+  emitToolExecutionProgress(
+    toolName: string, 
+    status: 'starting' | 'processing' | 'completed' | 'error',
+    progress?: number,
+    result?: any
+  ): AGUIEvent {
+    const event: AGUIEvent = {
+      type: "tool_progress",
+      component: "ToolExecutionProgress",
+      props: {
+        toolName,
+        status,
+        progress: progress || 0,
+        result,
+        timestamp: Date.now(),
+        showProgressBar: true,
+        showIntermediate: true
+      },
+      timestamp: Date.now()
+    };
+    
+    this.events.push(event);
+    return event;
+  }
   
   // Emit the new executive summary table - the star of the show!
   emitExecutiveSummaryTable(summaryData: ExecutiveSummaryTable): AGUIEvent {
@@ -383,11 +538,21 @@ export class OneQAGUIIntegration {
     this.eventEmitter = new AGUIEventEmitter();
   }
   
-  // Main method to process structured agent response and emit AG-UI events
-  processStructuredAgentResponse(agentResponse: SalesAgentResponse): AGUIEvent[] {
+  // ENHANCED: Main method to process structured agent response with transparency features
+  processEnhancedAgentResponse(agentResponse: EnhancedSalesAgentResponse): AGUIEvent[] {
     this.eventEmitter.clearEvents();
     
     try {
+      // NEW: Emit transparency components first for trust building
+      if (agentResponse.toolChainResults) {
+        this.eventEmitter.emitToolChainTransparency(agentResponse.toolChainResults);
+        this.eventEmitter.emitConsistencyConfidence(agentResponse.toolChainResults.validation);
+      }
+      
+      if (agentResponse.reasoningTrace) {
+        this.eventEmitter.emitReasoningTrace(agentResponse.reasoningTrace);
+      }
+      
       // Validate and parse the structured response
       const salesData = StructuredSalesDataParser.parseStructuredResponse(agentResponse);
       
@@ -427,10 +592,22 @@ export class OneQAGUIIntegration {
       );
       
     } catch (error) {
-      console.error('Error processing structured agent response:', error);
+      console.error('Error processing enhanced agent response:', error);
     }
     
     return this.eventEmitter.getEvents();
+  }
+
+  // LEGACY: Main method to process structured agent response (backward compatibility)
+  processStructuredAgentResponse(agentResponse: SalesAgentResponse): AGUIEvent[] {
+    // Convert to enhanced response format for processing
+    const enhancedResponse: EnhancedSalesAgentResponse = {
+      ...agentResponse,
+      overallConfidence: 85, // Default confidence for legacy responses
+      calculationTimestamp: Date.now()
+    };
+    
+    return this.processEnhancedAgentResponse(enhancedResponse);
   }
   
   // Method for real-time calculation updates during agent thinking

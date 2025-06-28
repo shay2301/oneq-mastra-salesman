@@ -1,18 +1,22 @@
-# OneQ Salesman Agent + AG-UI Integration Guide v2.0
+# OneQ Salesman Agent + AG-UI Integration Guide v3.0
 
-🚀 **Updated for Structured JSON Output & Executive Summary Table**
+🚀 **Enhanced with Tool Chain Transparency, Consistency Validation & Reasoning Trace**
 
 This guide explains how to integrate the enhanced OneQ Salesman Agent with AG-UI for interactive sales presentations featuring the new executive summary table and post-session urgency components.
 
 ## 🎯 **Overview**
 
-The OneQ Salesman Agent v2.0 now features:
+The OneQ Salesman Agent v3.0 now features:
 - ✅ **Structured JSON Output** (no more text parsing!)
 - ✅ **Executive Summary Table** (all critical numbers in one place)
 - ✅ **Post-90-Minute Session Urgency** (capture momentum immediately)
 - ✅ **Revenue Opportunity Calculations** (time-to-market advantage)
 - ✅ **Enhanced Time-to-Market Visualizations**
 - ✅ **Claude Sonnet 4 Reasoning** (transparent decision-making)
+- 🆕 **Tool Chain Transparency** (see how calculations are made)
+- 🆕 **Consistency Validation** (confidence scores and adjustments)
+- 🆕 **Real-time Tool Progress** (watch calculations happen live)
+- 🆕 **Decision Reasoning Trace** (understand AI decision-making)
 
 ## 📋 **Current Status**
 
@@ -39,30 +43,168 @@ npm install @ag-ui/core @ag-ui/react
 pnpm add @ag-ui/core @ag-ui/react
 ```
 
-### **2. Use the Enhanced Integration Layer**
+### **2. Use the Enhanced Integration Layer with Transparency**
 ```typescript
-import { OneQAGUIIntegration, SalesAgentResponse } from './src/mastra/integrations/agui-integration';
+import { 
+  OneQAGUIIntegration, 
+  EnhancedSalesAgentResponse,
+  ToolChainResults,
+  ReasoningTrace 
+} from './src/mastra/integrations/agui-integration';
 import { salesmanAgent } from './src/mastra/agents/salesman-agent';
 
 // Initialize AG-UI integration
 const aguiIntegration = new OneQAGUIIntegration();
 
-// Process structured agent response and get interactive components
+// Enhanced post-session sales presentation with full transparency
 async function handlePostSessionSalesPresentation(roadmapAnalysis: string) {
-  // Get structured JSON response from agent
-  const agentResponse: SalesAgentResponse = await salesmanAgent.generate(roadmapAnalysis);
+  // Get enhanced structured JSON response with transparency data
+  const agentResponse: EnhancedSalesAgentResponse = await salesmanAgent.generate(roadmapAnalysis);
   
-  // Convert to AG-UI events (now using structured data!)
-  const aguiEvents = aguiIntegration.processStructuredAgentResponse(agentResponse);
+  // Process with full transparency features
+  const aguiEvents = aguiIntegration.processEnhancedAgentResponse(agentResponse);
   
-  // Send events to your AG-UI frontend
+  // Send events to your AG-UI frontend (includes transparency components!)
   return aguiEvents;
+}
+
+// Real-time tool progress monitoring (optional)
+async function handleRealTimeCalculations(roadmapAnalysis: string) {
+  // Set up real-time progress monitoring
+  const progressHandler = (toolName: string, status: string, progress: number) => {
+    aguiIntegration.emitCalculationProgress(toolName, { status, progress });
+  };
+  
+  // Agent execution with progress tracking
+  const agentResponse = await salesmanAgent.generate(roadmapAnalysis, {
+    onToolProgress: progressHandler
+  });
+  
+  return aguiIntegration.processEnhancedAgentResponse(agentResponse);
 }
 ```
 
-### **3. Frontend Components You'll Get**
+### **3. Enhanced Frontend Components with Transparency**
 
-The integration automatically generates these interactive components:
+The integration automatically generates these interactive components with full transparency features:
+
+#### **🔍 NEW: Tool Chain Transparency Component**
+```typescript
+{
+  type: "generative_ui",
+  component: "CalculationTransparency",
+  props: {
+    toolChainResults: {
+      normalization: {
+        backendHours: 160,
+        complexity: "medium",
+        businessModel: "saas",
+        features: ["authentication", "dashboard", "api", "database"],
+        confidence: "high"
+      },
+      diyCalculation: {
+        totalCost: 252000,
+        totalHours: 1200,
+        timeline: "28 weeks",
+        confidence: "high"
+      },
+      revenueProjection: {
+        monthlyPotential: 54000,
+        marketBasis: "SaaS model in Israel: 25 new customers/month at $150 ARPU",
+        businessModel: "saas",
+        confidence: "high"
+      },
+      pricing: {
+        oneQPrice: 85000,
+        savingsPercentage: 66,
+        complexityMultiplier: 0.37,
+        confidence: "high"
+      },
+      validation: {
+        consistencyScore: 95,
+        adjustments: [],
+        overallConfidence: "high"
+      }
+    },
+    showDetailedBreakdown: true,
+    showConfidenceLevels: true,
+    allowDrillDown: true,
+    interactive: true
+  }
+}
+```
+
+#### **✅ NEW: Consistency Confidence Indicator**
+```typescript
+{
+  type: "confidence_indicator",
+  component: "ConsistencyConfidence",
+  props: {
+    consistencyScore: 95,
+    adjustments: [],
+    overallConfidence: "high",
+    calculationMethodology: "Standardized tool chain with validation",
+    showDetails: true,
+    trustIndicator: "high"
+  }
+}
+```
+
+#### **🧠 NEW: Reasoning Trace Component**
+```typescript
+{
+  type: "generative_ui",
+  component: "ReasoningTrace", 
+  props: {
+    steps: [
+      {
+        step: "complexity_analysis",
+        reasoning: "Features include authentication, real-time updates, and enterprise integrations",
+        decision: "Classified as medium complexity project",
+        confidence: 0.92
+      },
+      {
+        step: "business_model_identification", 
+        reasoning: "Subscription-based with recurring revenue model mentioned",
+        decision: "SaaS business model identified",
+        confidence: 0.88
+      },
+      {
+        step: "pricing_strategy",
+        reasoning: "Medium complexity projects use 37% of DIY cost based on market standards",
+        decision: "Applied 37% pricing multiplier",
+        confidence: 0.95
+      }
+    ],
+    finalDecision: "OneQ implementation at $85,000 provides 66% savings with high confidence",
+    overallConfidence: 0.91,
+    transparencyLevel: "full",
+    showThinkingProcess: true,
+    collapsible: true,
+    interactive: true
+  }
+}
+```
+
+#### **⚡ NEW: Real-time Tool Progress**
+```typescript
+{
+  type: "tool_progress",
+  component: "ToolExecutionProgress",
+  props: {
+    toolName: "calculateDIYCost",
+    status: "completed",
+    progress: 100,
+    result: {
+      totalDIYCost: 252000,
+      timeline: "28 weeks",
+      confidence: "high"
+    },
+    showProgressBar: true,
+    showIntermediate: true
+  }
+}
+```
 
 #### **🎯 NEW: Executive Summary Table (THE STAR)**
 ```typescript
@@ -203,18 +345,22 @@ The integration automatically generates these interactive components:
 }
 ```
 
-## 🔧 **Integration Architecture**
+## 🔧 **Enhanced Integration Architecture with Transparency**
 
 ```
 OneQ 90-Minute Session → Roadmap → Salesman Agent (Claude Sonnet 4 + Reasoning)
                                            ↓
-                                  Structured JSON Output
+                          Mandatory Tool Chain (Transparent):
+                    normalizeInput → calculateDIY → revenueProjections → pricing → validate
                                            ↓
-                                AG-UI Integration Layer v2.0
+                         Enhanced Structured JSON Output + Transparency Data
                                            ↓
-                        Enhanced Interactive Frontend Components
+                                AG-UI Integration Layer v3.0
                                            ↓
-                                IMMEDIATE DEAL CLOSURE
+                   Transparency Components + Enhanced Interactive Components
+                        (Tool Chain + Confidence + Reasoning + Sales Components)
+                                           ↓
+                         TRUSTED, DATA-DRIVEN IMMEDIATE DEAL CLOSURE
 ```
 
 ## 📊 **Data Flow (Updated)**
@@ -317,11 +463,15 @@ const salesPriorityOrder = [
 - **Professional presentation** that matches OneQ innovation level
 - **Real-time interactivity** keeps prospects engaged during critical closing window
 
-### **Enhanced Closing Power**
+### **Enhanced Closing Power with Trust**
 - **All critical numbers** consolidated in executive summary
 - **Revenue opportunity** calculations show upside potential  
 - **Time-to-market advantage** creates competitive urgency
 - **Post-session context** leverages fresh alignment and excitement
+- 🆕 **Full transparency** builds trust with decision-makers
+- 🆕 **Confidence scores** validate calculation reliability  
+- 🆕 **Reasoning trace** shows AI decision-making process
+- 🆕 **Tool chain visibility** proves methodology rigor
 
 ### **Data-Driven Decisions**
 - **Structured JSON** eliminates parsing errors
@@ -331,11 +481,15 @@ const salesPriorityOrder = [
 
 ## 🚀 **Implementation Checklist**
 
-### **Phase 1: Core Components**
+### **Phase 1: Core Components with Transparency**
 - [ ] Executive Summary Table component
 - [ ] Offer Headline component  
 - [ ] Enhanced Pricing Calculator
 - [ ] Post-Session Urgency component
+- 🆕 [ ] Tool Chain Transparency component
+- 🆕 [ ] Consistency Confidence Indicator  
+- 🆕 [ ] Reasoning Trace component
+- 🆕 [ ] Real-time Tool Progress component
 
 ### **Phase 2: Advanced Visualizations**
 - [ ] Time-to-Market Chart
@@ -351,11 +505,17 @@ const salesPriorityOrder = [
 
 ## 📞 **Ready to Get Started?**
 
-The enhanced OneQ Salesman Agent is now optimized for immediate post-session deal closure with powerful interactive components. Your prospects will see:
+The enhanced OneQ Salesman Agent v3.0 is now optimized for immediate post-session deal closure with powerful interactive components AND full transparency. Your prospects will see:
 
 1. **OneQ price prominently** (first number they see)
 2. **Executive summary table** (all critical numbers in one place)
 3. **Revenue opportunity** (upside from faster time-to-market) 
 4. **Post-session urgency** (capture 90-minute momentum)
+5. 🆕 **Tool chain transparency** (how calculations are made)
+6. 🆕 **Confidence indicators** (calculation reliability scores)
+7. 🆕 **Reasoning trace** (AI decision-making process)
+8. 🆕 **Real-time progress** (watch calculations happen live)
 
-**Next steps:** Install AG-UI, build the components, and start closing deals immediately after your 90-minute sessions! 🎯 
+**The result:** Prospects see not just compelling numbers, but TRUST the methodology behind them. This transparency builds confidence for faster decision-making and immediate deal closure.
+
+**Next steps:** Install AG-UI, build the transparency-enabled components, and start closing deals with unprecedented trust and speed after your 90-minute sessions! 🎯 
