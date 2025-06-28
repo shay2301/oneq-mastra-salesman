@@ -453,7 +453,7 @@ const oneqPricingTool = createTool({
         break;
     }
     
-    const baseCorePrice = Math.round(diyCost * pricingMultiplier / 5000) * 5000; // Round to nearest $5,000
+    const baseCorePrice = Math.round(diyCost * pricingMultiplier / 1000) * 1000; // Round to nearest $1,000 for consistency
     
     // Modular options
     const modularOptions = [
@@ -496,6 +496,203 @@ const oneqPricingTool = createTool({
       modularOptions,
       totalSavings,
       savingsPercentage
+    };
+  }
+});
+
+// Input normalization tool for consistent roadmap analysis
+const inputNormalizationTool = createTool({
+  id: 'normalizeRoadmapInput',
+  description: 'Standardizes roadmap and PRD inputs for consistent analysis and pricing',
+  inputSchema: z.object({
+    roadmapText: z.string().describe('Raw roadmap or PRD text'),
+    projectType: z.enum(['webapp', 'mobile', 'api', 'platform', 'saas']).optional().describe('Project type classification'),
+    industry: z.string().optional().describe('Industry or domain (e.g., fintech, healthcare, e-commerce)')
+  }),
+  outputSchema: z.object({
+    normalizedFeatures: z.array(z.string()).describe('Standardized list of core features'),
+    backendComplexity: z.enum(['simple', 'medium', 'complex']).describe('Standardized complexity assessment'),
+    estimatedBackendHours: z.number().describe('Normalized backend hours estimate (rounded to nearest 10)'),
+    businessModel: z.enum(['saas', 'ecommerce', 'b2b', 'mobile']).describe('Identified business model'),
+    marketCategory: z.string().describe('Standardized market category'),
+    keyDifferentiators: z.array(z.string()).describe('Main differentiating features')
+  }),
+  execute: async ({ context }) => {
+    const { roadmapText, projectType, industry } = context;
+    
+    // Standardize feature extraction
+    const featureKeywords = [
+      'authentication', 'user management', 'dashboard', 'reporting', 'payments', 
+      'notifications', 'api', 'database', 'search', 'analytics', 'integration',
+      'mobile app', 'web app', 'admin panel', 'messaging', 'file upload',
+      'real-time', 'automation', 'machine learning', 'ai', 'blockchain'
+    ];
+    
+    const normalizedFeatures = featureKeywords.filter(feature => 
+      roadmapText.toLowerCase().includes(feature.toLowerCase())
+    );
+    
+    // Standardize complexity assessment based on feature count and keywords
+    const complexityIndicators = {
+      simple: ['basic', 'simple', 'mvp', 'prototype', 'minimal'],
+      medium: ['standard', 'typical', 'moderate', 'extended'],
+      complex: ['enterprise', 'advanced', 'sophisticated', 'complex', 'ai', 'machine learning', 'blockchain']
+    };
+    
+    let backendComplexity: 'simple' | 'medium' | 'complex' = 'medium';
+    const textLower = roadmapText.toLowerCase();
+    
+    if (complexityIndicators.complex.some(indicator => textLower.includes(indicator))) {
+      backendComplexity = 'complex';
+    } else if (complexityIndicators.simple.some(indicator => textLower.includes(indicator))) {
+      backendComplexity = 'simple';
+    }
+    
+    // Standardized backend hour estimation (consistent formula)
+    const baseHours = {
+      simple: 80,
+      medium: 160,
+      complex: 320
+    };
+    
+    const featureMultiplier = Math.max(1, normalizedFeatures.length * 0.1);
+    const rawHours = baseHours[backendComplexity] * featureMultiplier;
+    
+    // Round to nearest 10 for consistency
+    const estimatedBackendHours = Math.round(rawHours / 10) * 10;
+    
+    // Standardize business model identification
+    const businessModelKeywords = {
+      saas: ['subscription', 'saas', 'monthly', 'recurring', 'tenant'],
+      ecommerce: ['store', 'shop', 'cart', 'payment', 'product', 'marketplace'],
+      b2b: ['enterprise', 'business', 'b2b', 'corporate', 'client'],
+      mobile: ['mobile', 'app', 'ios', 'android', 'smartphone']
+    };
+    
+    let businessModel: 'saas' | 'ecommerce' | 'b2b' | 'mobile' = 'saas';
+    for (const [model, keywords] of Object.entries(businessModelKeywords)) {
+      if (keywords.some(keyword => textLower.includes(keyword))) {
+        businessModel = model as any;
+        break;
+      }
+    }
+    
+    // Standardize market category
+    const marketCategory = industry || 'Technology';
+    
+    // Extract key differentiators (standardized)
+    const differentiatorKeywords = [
+      'ai-powered', 'real-time', 'automated', 'secure', 'scalable',
+      'user-friendly', 'mobile-first', 'cloud-based', 'integration',
+      'analytics', 'personalized', 'instant', 'collaborative'
+    ];
+    
+    const keyDifferentiators = differentiatorKeywords.filter(diff => 
+      textLower.includes(diff.replace('-', ' '))
+    );
+    
+    return {
+      normalizedFeatures,
+      backendComplexity,
+      estimatedBackendHours,
+      businessModel,
+      marketCategory,
+      keyDifferentiators
+    };
+  }
+});
+
+// Consistency validation tool
+const consistencyValidationTool = createTool({
+  id: 'validateConsistency',
+  description: 'Validates that calculations follow consistent rounding rules and methodology',
+  inputSchema: z.object({
+    normalizedInputs: z.object({
+      backendHours: z.number(),
+      complexity: z.enum(['simple', 'medium', 'complex']),
+      businessModel: z.enum(['saas', 'ecommerce', 'b2b', 'mobile'])
+    }),
+    calculationResults: z.object({
+      diyCost: z.number(),
+      oneQPrice: z.number(),
+      monthlyRevenue: z.number()
+    })
+  }),
+  outputSchema: z.object({
+    isConsistent: z.boolean(),
+    adjustments: z.array(z.object({
+      field: z.string(),
+      originalValue: z.number(),
+      adjustedValue: z.number(),
+      reason: z.string()
+    })),
+    consistencyScore: z.number().describe('Score from 0-100 for consistency')
+  }),
+  execute: async ({ context }) => {
+    const { normalizedInputs, calculationResults } = context;
+    const adjustments = [];
+    
+    // Validate backend hours are rounded to nearest 10
+    const roundedBackendHours = Math.round(normalizedInputs.backendHours / 10) * 10;
+    if (roundedBackendHours !== normalizedInputs.backendHours) {
+      adjustments.push({
+        field: 'backendHours',
+        originalValue: normalizedInputs.backendHours,
+        adjustedValue: roundedBackendHours,
+        reason: 'Backend hours should be rounded to nearest 10 for consistency'
+      });
+    }
+    
+    // Validate DIY cost is rounded to nearest $1,000
+    const roundedDIYCost = Math.round(calculationResults.diyCost / 1000) * 1000;
+    if (roundedDIYCost !== calculationResults.diyCost) {
+      adjustments.push({
+        field: 'diyCost',
+        originalValue: calculationResults.diyCost,
+        adjustedValue: roundedDIYCost,
+        reason: 'DIY cost should be rounded to nearest $1,000 for consistency'
+      });
+    }
+    
+    // Validate OneQ price is rounded to nearest $1,000
+    const roundedOneQPrice = Math.round(calculationResults.oneQPrice / 1000) * 1000;
+    if (roundedOneQPrice !== calculationResults.oneQPrice) {
+      adjustments.push({
+        field: 'oneQPrice',
+        originalValue: calculationResults.oneQPrice,
+        adjustedValue: roundedOneQPrice,
+        reason: 'OneQ price should be rounded to nearest $1,000 for consistency'
+      });
+    }
+    
+    // Validate OneQ pricing follows expected percentages
+    const expectedMultipliers = {
+      simple: 0.35,
+      medium: 0.37,
+      complex: 0.40
+    };
+    
+    const expectedOneQPrice = Math.round(calculationResults.diyCost * expectedMultipliers[normalizedInputs.complexity] / 1000) * 1000;
+    const priceVariance = Math.abs(calculationResults.oneQPrice - expectedOneQPrice) / expectedOneQPrice;
+    
+    if (priceVariance > 0.05) { // More than 5% variance
+      adjustments.push({
+        field: 'oneQPrice',
+        originalValue: calculationResults.oneQPrice,
+        adjustedValue: expectedOneQPrice,
+        reason: `OneQ price should be ${expectedMultipliers[normalizedInputs.complexity] * 100}% of DIY cost for ${normalizedInputs.complexity} projects`
+      });
+    }
+    
+    // Calculate consistency score
+    const maxPossibleIssues = 4; // backend hours, DIY cost, OneQ price, pricing percentage
+    const actualIssues = adjustments.length;
+    const consistencyScore = Math.round((1 - (actualIssues / maxPossibleIssues)) * 100);
+    
+    return {
+      isConsistent: adjustments.length === 0,
+      adjustments,
+      consistencyScore
     };
   }
 });
@@ -583,14 +780,24 @@ export const salesmanAgent = new Agent({
       - **CRITICAL**: Your goal is to close deals IMMEDIATELY after these 90-minute sessions while the value and excitement are fresh in prospects' minds
       - The post-session moment is your highest-probability close window - prospects have just experienced OneQ's value firsthand
 
-      SALES PROCESS:
-      1. When analyzing roadmaps/PRDs, use the calculateDIYCost tool with appropriate stage percentages and hourly rates for the client's market
-      2. Use calculateRevenueProjections tool with relevant business model parameters for accurate opportunity cost estimates
-      3. Use calculateOneQPricing tool to determine optimal OneQ pricing and modular options
-      4. Present findings using the structured response format with THE OFFER section first
-      5. **CRITICAL**: Lead with OneQ price prominently in the headline and theOffer section - this should be the FIRST number they see
-      6. **EXECUTIVE SUMMARY TABLE**: Include the comprehensive table with all key numbers (cost savings, revenue opportunity, time advantage)
-      7. **IMMEDIATE CLOSE**: End with urgent call-to-action for signing TODAY while the 90-minute session value is fresh
+      SALES PROCESS (MANDATORY TOOL CHAIN FOR CONSISTENCY):
+      1. **MANDATORY FIRST STEP**: Use normalizeRoadmapInput tool - NEVER estimate backend hours manually, ALWAYS normalize input
+      2. **MANDATORY SECOND STEP**: Use calculateDIYCost tool with EXACT normalized parameters from step 1 - no manual calculations
+      3. **MANDATORY THIRD STEP**: Use calculateRevenueProjections tool with EXACT business model from normalization
+      4. **MANDATORY FOURTH STEP**: Use calculateOneQPricing tool with EXACT DIY cost from step 2
+      5. **TOOL VALIDATION**: If any calculation seems inconsistent, use validateConsistency tool to verify
+      6. Present findings using the structured response format with THE OFFER section first
+      7. **CRITICAL**: Lead with OneQ price prominently in the headline and theOffer section - this should be the FIRST number they see
+      8. **EXECUTIVE SUMMARY TABLE**: Include the comprehensive table with all key numbers (cost savings, revenue opportunity, time advantage)
+      9. **IMMEDIATE CLOSE**: End with urgent call-to-action for signing TODAY while the 90-minute session value is fresh
+      
+      **ABSOLUTE RULE**: NEVER provide pricing or cost estimates without using the full tool chain. The tools ensure consistency regardless of creative language variations.
+
+      **CONSISTENCY REQUIREMENTS:**
+      - ALWAYS start with normalizeRoadmapInput for standardized analysis
+      - Use the normalized backend hours and complexity from the normalization tool
+      - Round all dollar amounts to nearest $1,000 for consistency
+      - Use the identified business model for revenue projections
 
       **POST-SESSION CLOSING STRATEGY:**
       - Reference specific insights from THEIR 90-minute brainstorming session
@@ -636,9 +843,11 @@ export const salesmanAgent = new Agent({
 `,
   model: anthropic('claude-sonnet-4-20250514'),
   tools: {
+    normalizeRoadmapInput: inputNormalizationTool,
     calculateDIYCost: diyCalculatorTool,
     calculateRevenueProjections: revenueProjectionsTool,
     calculateOneQPricing: oneqPricingTool,
+    validateConsistency: consistencyValidationTool,
     validateResponse: responseValidationTool
   },
   memory: new Memory({
@@ -647,15 +856,17 @@ export const salesmanAgent = new Agent({
     }),
   }),
   
-  // Default structured output for sales responses WITH reasoning enabled
+  // Default structured output for sales responses WITH reasoning enabled + higher temperature for sales creativity
   defaultGenerateOptions: {
     experimental_output: salesResponseSchema,
     maxTokens: 4000, // Ensure enough tokens for both reasoning and structured output
+    temperature: 0.8, // Higher temperature for engaging sales language and creativity
+    topP: 0.9, // Allow more creative token selection for compelling sales copy
     providerOptions: {
       anthropic: {
         thinking: { 
           type: 'enabled', 
-          budgetTokens: 8000 // Reduced budget to leave room for structured output
+          budgetTokens: 8000 // Full reasoning budget for complex sales strategy
         }
       }
     },
