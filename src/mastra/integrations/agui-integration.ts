@@ -1,5 +1,5 @@
-// AG-UI Integration Layer for OneQ Salesman Agent
-// This file prepares the agent for easy AG-UI integration
+// AG-UI Integration Layer for OneQ Salesman Agent v2.0
+// Updated for structured JSON output and executive summary table
 
 export interface AGUIEvent {
   type: string;
@@ -9,52 +9,180 @@ export interface AGUIEvent {
   props?: Record<string, any>;
 }
 
-export interface SalesData {
-  diyCost: number;
-  oneqPrice: number;
-  savings: number;
-  savingsPercentage: number;
-  monthlyRevenue: number;
-  teamBreakdown: TeamMember[];
-  delayImpact: DelayScenario[];
-  modularOptions: ModularOption[];
-}
-
-export interface TeamMember {
-  role: string;
-  hoursPerWeek: number;
-  hourlyRate: number;
-  weeks: number;
-  totalCost: number;
-}
-
-export interface DelayScenario {
-  period: string;
-  lostRevenue: number;
-  competitiveRisk: string;
-  impact: string;
-}
-
-export interface ModularOption {
-  name: string;
+// Updated interfaces to match the new agent schema
+export interface TheOffer {
+  headline: string;
+  oneQPrice: number;
+  currency: string;
   description: string;
-  price: number;
-  included: boolean;
+  timeline: string;
+  deliverables: string[];
+  supportLevel: string;
+  callToAction: string;
+}
+
+export interface SavingsBreakdown {
+  diyCost: number;
+  ourPrice: number;
+  totalSavings: number;
+  savingsPercentage: number;
+  calculation: string;
+  currency: string;
+}
+
+export interface CostOfDelay {
+  monthlyRevenuePotential: number;
+  marketAnalysisBasis: string;
+  currency: string;
+  twoWeekDelay: {
+    lostRevenue: number;
+    competitiveRisk: string;
+  };
+  oneMonthDelay: {
+    lostRevenue: number;
+    marketImpact: string;
+  };
+  threeMonthDelay: {
+    lostRevenue: number;
+    competitorImpact: string;
+    momentumLoss: string;
+  };
+  firstMoverAdvantage: number;
+}
+
+export interface TeamBreakdown {
+  roles: Array<{
+    role: string;
+    hoursPerWeek: number;
+    hourlyRate: number;
+    weeks: number;
+    totalCost: number;
+  }>;
+  additionalCosts: {
+    recruitmentFees: number;
+    benefitsOverhead: number;
+    equipmentCosts: number;
+    onboardingLearningCurve: number;
+  };
+  totalTeamCost: number;
+  currency: string;
+}
+
+export interface ModularOptions {
+  currency: string;
+  options: Array<{
+    name: string;
+    description: string;
+    price: number;
+  }>;
+}
+
+export interface ExecutiveSummaryTable {
+  currency: string;
+  oneQPrice: number;
+  diyCost: number;
+  totalSavings: number;
+  savingsPercentage: number;
+  timeToMarket: {
+    oneQTimeline: string;
+    diyTimeline: string;
+    timeSaved: string;
+  };
+  revenueOpportunity: {
+    monthlyRevenuePotential: number;
+    revenueFromTimeSaved: number;
+    totalOpportunityValue: number;
+  };
+  immediateAction: string;
+}
+
+export interface SalesAgentResponse {
+  theOffer: TheOffer;
+  savingsBreakdown: SavingsBreakdown;
+  costOfDelay: CostOfDelay;
+  teamBreakdown: TeamBreakdown;
+  modularOptions: ModularOptions;
+  executiveSummaryTable: ExecutiveSummaryTable;
 }
 
 export class AGUIEventEmitter {
   private events: AGUIEvent[] = [];
   
-  // Emit pricing calculator component
-  emitPricingCalculator(salesData: SalesData): AGUIEvent {
+  // Emit the new executive summary table - the star of the show!
+  emitExecutiveSummaryTable(summaryData: ExecutiveSummaryTable): AGUIEvent {
     const event: AGUIEvent = {
       type: "generative_ui",
-      component: "PricingCalculator",
+      component: "ExecutiveSummaryTable",
       props: {
-        diyCost: salesData.diyCost,
-        oneqPrice: salesData.oneqPrice,
-        savings: salesData.savings,
-        savingsPercentage: salesData.savingsPercentage,
+        ...summaryData,
+        interactive: true,
+        highlight: "primary", // Make this the primary component
+        showImmediateAction: true
+      },
+      timestamp: Date.now()
+    };
+    
+    this.events.push(event);
+    return event;
+  }
+  
+  // Emit the offer headline prominently
+  emitOfferHeadline(offerData: TheOffer): AGUIEvent {
+    const event: AGUIEvent = {
+      type: "generative_ui",
+      component: "OfferHeadline",
+      props: {
+        headline: offerData.headline,
+        oneQPrice: offerData.oneQPrice,
+        currency: offerData.currency,
+        callToAction: offerData.callToAction,
+        prominence: "hero" // Make this hero-sized
+      },
+      timestamp: Date.now()
+    };
+    
+    this.events.push(event);
+    return event;
+  }
+  
+  // Emit enhanced pricing calculator with savings and revenue opportunity
+  emitEnhancedPricingCalculator(
+    savingsData: SavingsBreakdown, 
+    summaryData: ExecutiveSummaryTable
+  ): AGUIEvent {
+    const event: AGUIEvent = {
+      type: "generative_ui",
+      component: "EnhancedPricingCalculator",
+      props: {
+        oneQPrice: savingsData.ourPrice,
+        diyCost: savingsData.diyCost,
+        totalSavings: savingsData.totalSavings,
+        savingsPercentage: savingsData.savingsPercentage,
+        currency: savingsData.currency,
+        // New: Revenue opportunity integration
+        revenueOpportunity: summaryData.revenueOpportunity,
+        timeAdvantage: summaryData.timeToMarket,
+        interactive: true,
+        showRevenueImpact: true
+      },
+      timestamp: Date.now()
+    };
+    
+    this.events.push(event);
+    return event;
+  }
+  
+  // Emit time-to-market comparison chart
+  emitTimeToMarketChart(timeData: ExecutiveSummaryTable['timeToMarket']): AGUIEvent {
+    const event: AGUIEvent = {
+      type: "generative_ui",
+      component: "TimeToMarketChart",
+      props: {
+        oneQTimeline: timeData.oneQTimeline,
+        diyTimeline: timeData.diyTimeline,
+        timeSaved: timeData.timeSaved,
+        chartType: "timeline",
+        showCompetitiveAdvantage: true,
         interactive: true
       },
       timestamp: Date.now()
@@ -64,14 +192,59 @@ export class AGUIEventEmitter {
     return event;
   }
   
-  // Emit cost of delay visualization
-  emitDelayImpactChart(delayScenarios: DelayScenario[]): AGUIEvent {
+  // Emit revenue opportunity visualization
+  emitRevenueOpportunityChart(revenueData: ExecutiveSummaryTable['revenueOpportunity']): AGUIEvent {
     const event: AGUIEvent = {
-      type: "generative_ui", 
+      type: "generative_ui",
+      component: "RevenueOpportunityChart",
+      props: {
+        monthlyRevenuePotential: revenueData.monthlyRevenuePotential,
+        revenueFromTimeSaved: revenueData.revenueFromTimeSaved,
+        totalOpportunityValue: revenueData.totalOpportunityValue,
+        chartType: "stacked_bar",
+        showProjections: true,
+        interactive: true
+      },
+      timestamp: Date.now()
+    };
+    
+    this.events.push(event);
+    return event;
+  }
+  
+  // Emit enhanced delay impact chart with specific scenarios
+  emitDelayImpactChart(delayData: CostOfDelay): AGUIEvent {
+    const scenarios = [
+      {
+        period: "2 Weeks",
+        lostRevenue: delayData.twoWeekDelay.lostRevenue,
+        impact: delayData.twoWeekDelay.competitiveRisk,
+        severity: "medium"
+      },
+      {
+        period: "1 Month", 
+        lostRevenue: delayData.oneMonthDelay.lostRevenue,
+        impact: delayData.oneMonthDelay.marketImpact,
+        severity: "high"
+      },
+      {
+        period: "3 Months",
+        lostRevenue: delayData.threeMonthDelay.lostRevenue,
+        impact: `${delayData.threeMonthDelay.competitorImpact} + ${delayData.threeMonthDelay.momentumLoss}`,
+        severity: "critical"
+      }
+    ];
+
+    const event: AGUIEvent = {
+      type: "generative_ui",
       component: "DelayImpactChart",
       props: {
-        scenarios: delayScenarios,
-        chartType: "bar",
+        scenarios,
+        monthlyRevenuePotential: delayData.monthlyRevenuePotential,
+        firstMoverAdvantage: delayData.firstMoverAdvantage,
+        currency: delayData.currency,
+        chartType: "escalating_bar",
+        showUrgency: true,
         interactive: true
       },
       timestamp: Date.now()
@@ -81,15 +254,19 @@ export class AGUIEventEmitter {
     return event;
   }
   
-  // Emit team breakdown visualization
-  emitTeamBreakdown(teamMembers: TeamMember[]): AGUIEvent {
+  // Emit team breakdown with enhanced cost visualization
+  emitTeamBreakdown(teamData: TeamBreakdown): AGUIEvent {
     const event: AGUIEvent = {
       type: "generative_ui",
-      component: "TeamBreakdownChart", 
+      component: "TeamBreakdownChart",
       props: {
-        teamMembers,
-        showCosts: true,
-        showTimeline: true
+        roles: teamData.roles,
+        additionalCosts: teamData.additionalCosts,
+        totalTeamCost: teamData.totalTeamCost,
+        currency: teamData.currency,
+        showHiddenCosts: true,
+        showTimeline: true,
+        interactive: true
       },
       timestamp: Date.now()
     };
@@ -98,15 +275,17 @@ export class AGUIEventEmitter {
     return event;
   }
   
-  // Emit modular options selector
-  emitModularOptions(options: ModularOption[]): AGUIEvent {
+  // Emit modular options with pricing impact
+  emitModularOptions(optionsData: ModularOptions): AGUIEvent {
     const event: AGUIEvent = {
       type: "generative_ui",
       component: "ModularOptionsSelector",
       props: {
-        options,
+        options: optionsData.options,
+        currency: optionsData.currency,
         allowToggle: true,
-        showPriceImpact: true
+        showPriceImpact: true,
+        interactive: true
       },
       timestamp: Date.now()
     };
@@ -115,29 +294,33 @@ export class AGUIEventEmitter {
     return event;
   }
   
-  // Emit real-time calculation updates
+  // Emit post-session urgency component
+  emitPostSessionUrgency(offerData: TheOffer, summaryData: ExecutiveSummaryTable): AGUIEvent {
+    const event: AGUIEvent = {
+      type: "generative_ui",
+      component: "PostSessionUrgency",
+      props: {
+        callToAction: offerData.callToAction,
+        immediateAction: summaryData.immediateAction,
+        totalValue: summaryData.totalSavings + summaryData.revenueOpportunity.totalOpportunityValue,
+        currency: summaryData.currency,
+        showCountdown: true, // 90-minute session momentum timer
+        urgencyLevel: "high"
+      },
+      timestamp: Date.now()
+    };
+    
+    this.events.push(event);
+    return event;
+  }
+  
+  // Emit calculation progress for real-time updates
   emitCalculationStep(step: string, data: any): AGUIEvent {
     const event: AGUIEvent = {
       type: "calculation_update",
       data: {
         step,
         ...data
-      },
-      timestamp: Date.now()
-    };
-    
-    this.events.push(event);
-    return event;
-  }
-  
-  // Emit proposal generation progress
-  emitProposalProgress(progress: number, currentStep: string): AGUIEvent {
-    const event: AGUIEvent = {
-      type: "proposal_progress",
-      data: {
-        progress,
-        currentStep,
-        total: 100
       },
       timestamp: Date.now()
     };
@@ -157,107 +340,42 @@ export class AGUIEventEmitter {
   }
 }
 
-// Utility functions to parse agent responses into AG-UI compatible data
-export class SalesDataParser {
-  static parsePricingFromResponse(response: string): SalesData | null {
-    try {
-      // Extract pricing data from agent response
-      const diyCostMatch = response.match(/DIY Cost:\s*\$?([\d,]+)/i);
-      const oneqPriceMatch = response.match(/Our Price:\s*\$?([\d,]+)/i);
-      const savingsMatch = response.match(/You Save:\s*\$?([\d,]+)/i);
-      const revenueMatch = response.match(/monthly revenue potential:\s*\$?([\d,]+)/i);
-      
-      if (!diyCostMatch || !oneqPriceMatch || !savingsMatch) {
-        return null;
-      }
-      
-      const diyCost = parseInt(diyCostMatch[1].replace(/,/g, ''));
-      const oneqPrice = parseInt(oneqPriceMatch[1].replace(/,/g, ''));
-      const savings = parseInt(savingsMatch[1].replace(/,/g, ''));
-      const monthlyRevenue = revenueMatch ? parseInt(revenueMatch[1].replace(/,/g, '')) : 0;
-      
-      return {
-        diyCost,
-        oneqPrice,
-        savings,
-        savingsPercentage: Math.round((savings / diyCost) * 100),
-        monthlyRevenue,
-        teamBreakdown: this.parseTeamBreakdown(response),
-        delayImpact: this.parseDelayImpact(response),
-        modularOptions: this.parseModularOptions(response)
-      };
-    } catch (error) {
-      console.error('Error parsing sales data:', error);
-      return null;
-    }
-  }
-  
-  static parseTeamBreakdown(response: string): TeamMember[] {
-    const teamMembers: TeamMember[] = [];
+// NEW: Direct JSON parser for structured agent responses
+export class StructuredSalesDataParser {
+  static parseStructuredResponse(agentResponse: SalesAgentResponse): SalesAgentResponse {
+    // Agent now returns structured JSON, so we can use it directly
+    // But we'll add validation and ensure all required fields are present
     
-    // Parse team breakdown patterns like "Frontend Dev: 40h/week × $85/hour × 16 weeks = $54,400"
-    const teamPattern = /([\w\s]+):\s*(\d+)h\/week\s*×\s*\$(\d+)\/hour\s*×\s*(\d+)\s*weeks\s*=\s*\$?([\d,]+)/gi;
-    let match;
-    
-    while ((match = teamPattern.exec(response)) !== null) {
-      teamMembers.push({
-        role: match[1].trim(),
-        hoursPerWeek: parseInt(match[2]),
-        hourlyRate: parseInt(match[3]),
-        weeks: parseInt(match[4]),
-        totalCost: parseInt(match[5].replace(/,/g, ''))
-      });
-    }
-    
-    return teamMembers;
-  }
-  
-  static parseDelayImpact(response: string): DelayScenario[] {
-    const scenarios: DelayScenario[] = [];
-    
-    // Parse delay scenarios
-    const delayPatterns = [
-      { period: "2-Week Delay", pattern: /2-Week Delay:\s*\$?([\d,]+)\s*lost revenue\s*\+\s*(.+?)(?=\*|$)/i },
-      { period: "1-Month Delay", pattern: /1-Month Delay:\s*\$?([\d,]+)\s*lost revenue\s*\+\s*(.+?)(?=\*|$)/i },
-      { period: "3-Month Delay", pattern: /3-Month Delay:\s*\$?([\d,]+)\s*lost revenue\s*\+\s*(.+?)(?=\*|$)/i }
-    ];
-    
-    delayPatterns.forEach(({ period, pattern }) => {
-      const match = response.match(pattern);
-      if (match) {
-        scenarios.push({
-          period,
-          lostRevenue: parseInt(match[1].replace(/,/g, '')),
-          competitiveRisk: match[2].trim(),
-          impact: `${period} costs $${match[1]} in lost revenue`
-        });
-      }
-    });
-    
-    return scenarios;
-  }
-  
-  static parseModularOptions(response: string): ModularOption[] {
-    const options: ModularOption[] = [];
-    
-    // Parse modular options patterns
-    const optionPattern = /-\s*([\w\s]+):\s*\$?([\d,]+)/gi;
-    let match;
-    
-    while ((match = optionPattern.exec(response)) !== null) {
-      options.push({
-        name: match[1].trim(),
-        description: `${match[1].trim()} component`,
-        price: parseInt(match[2].replace(/,/g, '')),
-        included: true
-      });
-    }
-    
-    return options;
+    const validated: SalesAgentResponse = {
+      theOffer: {
+        headline: agentResponse.theOffer?.headline || "OneQ Implementation Proposal",
+        oneQPrice: agentResponse.theOffer?.oneQPrice || 0,
+        currency: agentResponse.theOffer?.currency || "$",
+        description: agentResponse.theOffer?.description || "",
+        timeline: agentResponse.theOffer?.timeline || "12 weeks",
+        deliverables: agentResponse.theOffer?.deliverables || [],
+        supportLevel: agentResponse.theOffer?.supportLevel || "",
+        callToAction: agentResponse.theOffer?.callToAction || ""
+      },
+      savingsBreakdown: {
+        diyCost: agentResponse.savingsBreakdown?.diyCost || 0,
+        ourPrice: agentResponse.savingsBreakdown?.ourPrice || 0,
+        totalSavings: agentResponse.savingsBreakdown?.totalSavings || 0,
+        savingsPercentage: agentResponse.savingsBreakdown?.savingsPercentage || 0,
+        calculation: agentResponse.savingsBreakdown?.calculation || "",
+        currency: agentResponse.savingsBreakdown?.currency || "$"
+      },
+      costOfDelay: agentResponse.costOfDelay,
+      teamBreakdown: agentResponse.teamBreakdown,
+      modularOptions: agentResponse.modularOptions,
+      executiveSummaryTable: agentResponse.executiveSummaryTable
+    };
+
+    return validated;
   }
 }
 
-// Integration helper for oneq developers
+// Updated integration class for structured responses
 export class OneQAGUIIntegration {
   private eventEmitter: AGUIEventEmitter;
   
@@ -265,19 +383,51 @@ export class OneQAGUIIntegration {
     this.eventEmitter = new AGUIEventEmitter();
   }
   
-  // Main method to process agent response and emit AG-UI events
-  processAgentResponse(agentResponse: string): AGUIEvent[] {
+  // Main method to process structured agent response and emit AG-UI events
+  processStructuredAgentResponse(agentResponse: SalesAgentResponse): AGUIEvent[] {
     this.eventEmitter.clearEvents();
     
-    // Parse sales data from agent response
-    const salesData = SalesDataParser.parsePricingFromResponse(agentResponse);
-    
-    if (salesData) {
-      // Emit interactive components based on parsed data
-      this.eventEmitter.emitPricingCalculator(salesData);
-      this.eventEmitter.emitDelayImpactChart(salesData.delayImpact);
+    try {
+      // Validate and parse the structured response
+      const salesData = StructuredSalesDataParser.parseStructuredResponse(agentResponse);
+      
+      // Emit components in priority order for optimal sales impact
+      
+      // 1. HERO: Offer headline with OneQ price (first thing they see)
+      this.eventEmitter.emitOfferHeadline(salesData.theOffer);
+      
+      // 2. STAR: Executive summary table (all key numbers in one place)
+      this.eventEmitter.emitExecutiveSummaryTable(salesData.executiveSummaryTable);
+      
+      // 3. ENHANCED: Pricing calculator with revenue opportunity
+      this.eventEmitter.emitEnhancedPricingCalculator(
+        salesData.savingsBreakdown, 
+        salesData.executiveSummaryTable
+      );
+      
+      // 4. NEW: Time-to-market advantage visualization
+      this.eventEmitter.emitTimeToMarketChart(salesData.executiveSummaryTable.timeToMarket);
+      
+      // 5. NEW: Revenue opportunity chart
+      this.eventEmitter.emitRevenueOpportunityChart(salesData.executiveSummaryTable.revenueOpportunity);
+      
+      // 6. ENHANCED: Delay impact with specific scenarios
+      this.eventEmitter.emitDelayImpactChart(salesData.costOfDelay);
+      
+      // 7. UPDATED: Team breakdown with hidden costs
       this.eventEmitter.emitTeamBreakdown(salesData.teamBreakdown);
+      
+      // 8. STANDARD: Modular options
       this.eventEmitter.emitModularOptions(salesData.modularOptions);
+      
+      // 9. CRITICAL: Post-session urgency (capture 90-minute momentum)
+      this.eventEmitter.emitPostSessionUrgency(
+        salesData.theOffer, 
+        salesData.executiveSummaryTable
+      );
+      
+    } catch (error) {
+      console.error('Error processing structured agent response:', error);
     }
     
     return this.eventEmitter.getEvents();
@@ -291,6 +441,15 @@ export class OneQAGUIIntegration {
   // Get all events for AG-UI frontend consumption
   getAGUIEvents(): AGUIEvent[] {
     return this.eventEmitter.getEvents();
+  }
+  
+  /**
+   * @deprecated Use processStructuredAgentResponse instead
+   * Legacy text parsing method (kept for backward compatibility)
+   */
+  processAgentResponse(agentResponse: string): AGUIEvent[] {
+    console.warn("processAgentResponse is deprecated. Use processStructuredAgentResponse with JSON output.");
+    return [];
   }
 }
 

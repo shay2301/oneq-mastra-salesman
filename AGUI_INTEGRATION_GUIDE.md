@@ -1,24 +1,34 @@
-# OneQ Salesman Agent + AG-UI Integration Guide
+# OneQ Salesman Agent + AG-UI Integration Guide v2.0
 
-This guide explains how to integrate the OneQ Salesman Agent with AG-UI for interactive sales presentations.
+🚀 **Updated for Structured JSON Output & Executive Summary Table**
+
+This guide explains how to integrate the enhanced OneQ Salesman Agent with AG-UI for interactive sales presentations featuring the new executive summary table and post-session urgency components.
 
 ## 🎯 **Overview**
 
-The OneQ Salesman Agent is designed to be AG-UI ready, allowing for seamless integration of interactive sales components into your frontend application.
+The OneQ Salesman Agent v2.0 now features:
+- ✅ **Structured JSON Output** (no more text parsing!)
+- ✅ **Executive Summary Table** (all critical numbers in one place)
+- ✅ **Post-90-Minute Session Urgency** (capture momentum immediately)
+- ✅ **Revenue Opportunity Calculations** (time-to-market advantage)
+- ✅ **Enhanced Time-to-Market Visualizations**
+- ✅ **Claude Sonnet 4 Reasoning** (transparent decision-making)
 
 ## 📋 **Current Status**
 
 ✅ **Ready for Integration:**
-- Salesman agent with structured output
-- AG-UI event emitter layer
-- Data parsing utilities
-- TypeScript interfaces
+- Enhanced salesman agent with structured output schema
+- Executive summary table for deal closure
+- Post-session urgency components  
+- Revenue opportunity calculations
+- Updated AG-UI event emitter layer
+- TypeScript interfaces matching new schema
 
 🔧 **Next Steps for OneQ Team:**
 - Install AG-UI in your application
-- Connect the integration layer
-- Build frontend components
-- Test end-to-end workflow
+- Connect the new structured integration layer
+- Build enhanced frontend components
+- Test post-session closing workflow
 
 ## 🚀 **Quick Start Integration**
 
@@ -29,21 +39,21 @@ npm install @ag-ui/core @ag-ui/react
 pnpm add @ag-ui/core @ag-ui/react
 ```
 
-### **2. Use the Integration Layer**
+### **2. Use the Enhanced Integration Layer**
 ```typescript
-import { OneQAGUIIntegration } from './src/mastra/integrations/agui-integration';
+import { OneQAGUIIntegration, SalesAgentResponse } from './src/mastra/integrations/agui-integration';
 import { salesmanAgent } from './src/mastra/agents/salesman-agent';
 
 // Initialize AG-UI integration
 const aguiIntegration = new OneQAGUIIntegration();
 
-// Process agent response and get interactive components
-async function handleSalesConversation(userInput: string) {
-  // Get agent response
-  const agentResponse = await salesmanAgent.generate(userInput);
+// Process structured agent response and get interactive components
+async function handlePostSessionSalesPresentation(roadmapAnalysis: string) {
+  // Get structured JSON response from agent
+  const agentResponse: SalesAgentResponse = await salesmanAgent.generate(roadmapAnalysis);
   
-  // Convert to AG-UI events
-  const aguiEvents = aguiIntegration.processAgentResponse(agentResponse);
+  // Convert to AG-UI events (now using structured data!)
+  const aguiEvents = aguiIntegration.processStructuredAgentResponse(agentResponse);
   
   // Send events to your AG-UI frontend
   return aguiEvents;
@@ -54,68 +64,141 @@ async function handleSalesConversation(userInput: string) {
 
 The integration automatically generates these interactive components:
 
-#### **📊 Pricing Calculator**
+#### **🎯 NEW: Executive Summary Table (THE STAR)**
 ```typescript
 {
   type: "generative_ui",
-  component: "PricingCalculator",
+  component: "ExecutiveSummaryTable",
   props: {
+    currency: "$",
+    oneQPrice: 85000,
     diyCost: 252000,
-    oneqPrice: 85000,
-    savings: 167000,
+    totalSavings: 167000,
     savingsPercentage: 66,
+    timeToMarket: {
+      oneQTimeline: "12 weeks",
+      diyTimeline: "28 weeks", 
+      timeSaved: "16 weeks faster"
+    },
+    revenueOpportunity: {
+      monthlyRevenuePotential: 54000,
+      revenueFromTimeSaved: 216000,
+      totalOpportunityValue: 383000
+    },
+    immediateAction: "Let's start implementation while your team momentum is hot!",
+    interactive: true,
+    highlight: "primary"
+  }
+}
+```
+
+#### **🏆 NEW: Offer Headline (HERO COMPONENT)**
+```typescript
+{
+  type: "generative_ui",
+  component: "OfferHeadline",
+  props: {
+    headline: "OneQ will deliver your complete cybersecurity platform for $85,000 - saving you $167,000 and 16 weeks",
+    oneQPrice: 85000,
+    currency: "$",
+    callToAction: "Ready to start building your vision today?",
+    prominence: "hero"
+  }
+}
+```
+
+#### **⏰ NEW: Time-to-Market Chart**
+```typescript
+{
+  type: "generative_ui",
+  component: "TimeToMarketChart",
+  props: {
+    oneQTimeline: "12 weeks",
+    diyTimeline: "28 weeks",
+    timeSaved: "16 weeks faster",
+    chartType: "timeline",
+    showCompetitiveAdvantage: true,
     interactive: true
   }
 }
 ```
 
-#### **⏰ Cost of Delay Chart**
+#### **💰 NEW: Revenue Opportunity Chart**
+```typescript
+{
+  type: "generative_ui",
+  component: "RevenueOpportunityChart",
+  props: {
+    monthlyRevenuePotential: 54000,
+    revenueFromTimeSaved: 216000,
+    totalOpportunityValue: 383000,
+    chartType: "stacked_bar",
+    showProjections: true,
+    interactive: true
+  }
+}
+```
+
+#### **📊 ENHANCED: Pricing Calculator with Revenue Integration**
+```typescript
+{
+  type: "generative_ui",
+  component: "EnhancedPricingCalculator",
+  props: {
+    oneQPrice: 85000,
+    diyCost: 252000,
+    totalSavings: 167000,
+    savingsPercentage: 66,
+    currency: "$",
+    revenueOpportunity: {
+      monthlyRevenuePotential: 54000,
+      revenueFromTimeSaved: 216000,
+      totalOpportunityValue: 383000
+    },
+    timeAdvantage: {
+      oneQTimeline: "12 weeks",
+      diyTimeline: "28 weeks",
+      timeSaved: "16 weeks faster"
+    },
+    interactive: true,
+    showRevenueImpact: true
+  }
+}
+```
+
+#### **⚠️ ENHANCED: Cost of Delay Chart with Severity Levels**
 ```typescript
 {
   type: "generative_ui",
   component: "DelayImpactChart", 
   props: {
     scenarios: [
-      { period: "2-Week Delay", lostRevenue: 27000, impact: "Competitive risk" },
-      { period: "1-Month Delay", lostRevenue: 54000, impact: "Market position impact" },
-      { period: "3-Month Delay", lostRevenue: 162000, impact: "Competitors established" }
+      { period: "2 Weeks", lostRevenue: 27000, impact: "Competitive risk", severity: "medium" },
+      { period: "1 Month", lostRevenue: 54000, impact: "Market position impact", severity: "high" },
+      { period: "3 Months", lostRevenue: 162000, impact: "Competitors established + momentum lost", severity: "critical" }
     ],
-    chartType: "bar",
+    monthlyRevenuePotential: 54000,
+    firstMoverAdvantage: 97200,
+    currency: "$",
+    chartType: "escalating_bar",
+    showUrgency: true,
     interactive: true
   }
 }
 ```
 
-#### **👥 Team Breakdown Visualization**
+#### **🚨 NEW: Post-Session Urgency Component**
 ```typescript
 {
   type: "generative_ui",
-  component: "TeamBreakdownChart",
+  component: "PostSessionUrgency",
   props: {
-    teamMembers: [
-      { role: "Frontend Dev", hoursPerWeek: 40, hourlyRate: 85, weeks: 16, totalCost: 54400 },
-      { role: "Backend Dev", hoursPerWeek: 40, hourlyRate: 90, weeks: 16, totalCost: 57600 },
-      // ... more team members
-    ],
-    showCosts: true,
-    showTimeline: true
-  }
-}
-```
-
-#### **🧩 Modular Options Selector**
-```typescript
-{
-  type: "generative_ui", 
-  component: "ModularOptionsSelector",
-  props: {
-    options: [
-      { name: "Core implementation", price: 85000, included: true },
-      { name: "Extended support", price: 15000, included: false },
-      { name: "Additional features", price: 25000, included: false }
-    ],
-    allowToggle: true,
-    showPriceImpact: true
+    callToAction: "Ready to start building your vision today?",
+    immediateAction: "Let's start implementation while your team momentum is hot!",
+    totalValue: 550000, // Combined savings + revenue opportunity
+    currency: "$",
+    showCountdown: true, // 90-minute session momentum timer
+    urgencyLevel: "high"
   }
 }
 ```
@@ -123,139 +206,156 @@ The integration automatically generates these interactive components:
 ## 🔧 **Integration Architecture**
 
 ```
-OneQ Session → Roadmap Agent → PRD Agent → Salesman Agent
-                                              ↓
-                                    AG-UI Integration Layer
-                                              ↓
-                              Interactive Frontend Components
+OneQ 90-Minute Session → Roadmap → Salesman Agent (Claude Sonnet 4 + Reasoning)
+                                           ↓
+                                  Structured JSON Output
+                                           ↓
+                                AG-UI Integration Layer v2.0
+                                           ↓
+                        Enhanced Interactive Frontend Components
+                                           ↓
+                                IMMEDIATE DEAL CLOSURE
 ```
 
-## 📊 **Data Flow**
+## 📊 **Data Flow (Updated)**
 
-1. **Agent Response** → Structured text with pricing, team breakdown, delay costs
-2. **Parser** → Extracts data using regex patterns
-3. **Event Emitter** → Converts data to AG-UI events
-4. **Frontend** → Renders interactive components
+1. **Agent Response** → Structured JSON with executive summary table
+2. **Structured Parser** → Direct JSON handling (no regex needed!)
+3. **Event Emitter** → Converts JSON to AG-UI events with priority ordering
+4. **Frontend** → Renders interactive components optimized for deal closure
 
 ## 🎨 **Frontend Components to Build**
 
-### **PricingCalculator.tsx**
-- Interactive sliders for project scope
-- Real-time price updates
-- Savings visualization
-- Comparison charts
+### **ExecutiveSummaryTable.tsx (PRIORITY #1)**
+- All critical numbers in one place
+- Cost savings vs revenue opportunity
+- Time-to-market advantage
+- Immediate action buttons
+- Post-session momentum messaging
 
-### **DelayImpactChart.tsx**
-- Bar chart showing delay costs
-- Timeline visualization
-- Competitive risk indicators
-- Revenue loss projections
+### **OfferHeadline.tsx (HERO COMPONENT)**  
+- Bold OneQ price display
+- Savings highlight
+- Time advantage
+- Strong call-to-action
 
-### **TeamBreakdownChart.tsx**
-- Team member cards with costs
-- Timeline Gantt chart
-- Resource allocation view
-- Cost breakdown by role
+### **EnhancedPricingCalculator.tsx**
+- Interactive cost/savings sliders
+- Revenue opportunity integration
+- Time-to-market impact
+- Real-time total value calculation
 
-### **ModularOptionsSelector.tsx**
-- Checkbox options for add-ons
-- Real-time price calculation
-- Package configurator
-- Recommendation engine
+### **TimeToMarketChart.tsx (NEW)**
+- Timeline comparison visualization
+- Competitive advantage indicators
+- First-mover benefits
+- Market window analysis
+
+### **RevenueOpportunityChart.tsx (NEW)**
+- Revenue projections from faster launch
+- Stacked value visualization
+- Market penetration scenarios
+- ROI calculations
+
+### **PostSessionUrgency.tsx (CRITICAL)**
+- 90-minute session momentum timer
+- Team alignment messaging
+- Immediate action prompts
+- Total value emphasis
 
 ## 🔌 **Integration Points**
 
-### **With Existing OneQ Systems**
+### **With OneQ 90-Minute Sessions**
 ```typescript
-// Connect to session data
-interface SessionContext {
+// Enhanced session context for immediate post-session sales
+interface PostSessionContext {
+  sessionId: string;
+  sessionEndTime: number; // For urgency calculations
   roadmap: RoadmapData;
   prd: PRDData;
   participants: Participant[];
-  insights: SessionInsight[];
+  teamAlignment: AlignmentScore;
+  keyInsights: SessionInsight[];
+  momentum: 'high' | 'medium' | 'low';
 }
 
-// Enhanced agent with session context
-const enhancedSalesmanAgent = new Agent({
+// Agent with post-session context
+const postSessionSalesmanAgent = new Agent({
   // ... existing config
-  context: sessionContext
+  context: postSessionContext,
+  instructions: `
+    CRITICAL: This is immediately after a 90-minute OneQ session.
+    The prospect has just experienced OneQ's value firsthand.
+    Strike while the iron is hot - maximum urgency and momentum!
+    Reference specific insights from THEIR session.
+    Close the deal TODAY.
+  `
 });
 ```
 
-### **With OneQ CRM/Pipeline**
+### **Component Priority Order (Sales Optimized)**
 ```typescript
-// Track sales interactions
-interface SalesInteraction {
-  sessionId: string;
-  proposalGenerated: boolean;
-  componentsInteracted: string[];
-  finalPrice: number;
-  dealStatus: 'open' | 'closed' | 'lost';
-}
+// Emit components in order of sales impact
+const salesPriorityOrder = [
+  'OfferHeadline',           // 1. Hero - OneQ price first
+  'ExecutiveSummaryTable',   // 2. Star - All numbers in one place  
+  'EnhancedPricingCalculator', // 3. Interactive savings
+  'TimeToMarketChart',       // 4. Competitive advantage
+  'RevenueOpportunityChart', // 5. Revenue upside
+  'DelayImpactChart',        // 6. Cost of waiting
+  'TeamBreakdownChart',      // 7. Implementation details
+  'ModularOptionsSelector',  // 8. Customization options
+  'PostSessionUrgency'       // 9. Final close with urgency
+];
 ```
 
 ## 🎯 **Benefits for OneQ**
 
 ### **Immediate Impact**
-- **Professional presentation** that matches your innovation
-- **Interactive exploration** vs static proposals
-- **Real-time customization** during sales calls
-- **Visual impact** that makes numbers tangible
+- **90-minute session momentum capture** with post-session urgency
+- **Executive summary table** provides instant business case
+- **Professional presentation** that matches OneQ innovation level
+- **Real-time interactivity** keeps prospects engaged during critical closing window
 
-### **Sales Effectiveness**
-- **Higher engagement** through interaction
-- **Faster decision making** with immediate what-if scenarios
-- **Better objection handling** with visual data
-- **Increased close rates** through professional presentation
+### **Enhanced Closing Power**
+- **All critical numbers** consolidated in executive summary
+- **Revenue opportunity** calculations show upside potential  
+- **Time-to-market advantage** creates competitive urgency
+- **Post-session context** leverages fresh alignment and excitement
 
-### **Competitive Advantage**
-- **First consulting firm** with interactive AI proposals
-- **Modern, tech-forward** brand positioning
-- **Scalable sales process** that doesn't require senior staff
-- **Data-driven presentations** that build trust
+### **Data-Driven Decisions**
+- **Structured JSON** eliminates parsing errors
+- **Component tracking** shows engagement patterns
+- **A/B testing ready** for optimization
+- **CRM integration** ready for pipeline management
 
-## 🛠 **Implementation Phases**
+## 🚀 **Implementation Checklist**
 
-### **Phase 1: Basic Integration (Week 1-2)**
-- Install AG-UI
-- Connect salesman agent
-- Build basic pricing calculator
-- Test with sample data
+### **Phase 1: Core Components**
+- [ ] Executive Summary Table component
+- [ ] Offer Headline component  
+- [ ] Enhanced Pricing Calculator
+- [ ] Post-Session Urgency component
 
-### **Phase 2: Enhanced Components (Week 3-4)**
-- Add delay impact visualization
-- Build team breakdown charts
-- Create modular options selector
-- Polish UI/UX
+### **Phase 2: Advanced Visualizations**
+- [ ] Time-to-Market Chart
+- [ ] Revenue Opportunity Chart
+- [ ] Enhanced Delay Impact Chart
+- [ ] Team Breakdown with hidden costs
 
-### **Phase 3: Advanced Features (Week 5-6)**
-- Real-time collaboration features
-- Integration with OneQ CRM
-- Advanced analytics and tracking
-- Mobile optimization
+### **Phase 3: Integration & Testing**
+- [ ] Post-session workflow integration
+- [ ] Real-time calculation updates
+- [ ] Mobile-responsive design
+- [ ] A/B testing framework
 
-### **Phase 4: Production Ready (Week 7-8)**
-- Performance optimization
-- Error handling and fallbacks
-- User testing and feedback
-- Deployment and monitoring
+## 📞 **Ready to Get Started?**
 
-## 📞 **Next Steps**
+The enhanced OneQ Salesman Agent is now optimized for immediate post-session deal closure with powerful interactive components. Your prospects will see:
 
-1. **Review this integration approach** with your team
-2. **Install AG-UI** in your development environment
-3. **Test the salesman agent** with the integration layer
-4. **Build one component** (start with PricingCalculator)
-5. **Schedule integration meeting** to discuss specific requirements
+1. **OneQ price prominently** (first number they see)
+2. **Executive summary table** (all critical numbers in one place)
+3. **Revenue opportunity** (upside from faster time-to-market) 
+4. **Post-session urgency** (capture 90-minute momentum)
 
-## 🤝 **Support**
-
-The salesman agent and integration layer are designed to be:
-- **Plug-and-play** with minimal setup
-- **Customizable** for your specific needs
-- **Scalable** as your requirements grow
-- **Maintainable** with clear separation of concerns
-
----
-
-**Ready to transform your sales process?** Let's make OneQ's sales presentations as innovative as your brainstorming sessions! 🚀 
+**Next steps:** Install AG-UI, build the components, and start closing deals immediately after your 90-minute sessions! 🎯 
