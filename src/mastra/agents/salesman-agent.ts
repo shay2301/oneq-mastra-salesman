@@ -110,6 +110,7 @@ export const salesmanAgent = new Agent({
       STEP 3: Time-to-Market Impact Analysis
       Calculate revenue impact of different launch delays:
 
+      **Use the calculator tool to calculate all the costs for the project**
       **Immediate Implementation (oneq path):**
       - Time to market: 8-16 weeks depending on complexity
       - Revenue start date: Week 8-16
