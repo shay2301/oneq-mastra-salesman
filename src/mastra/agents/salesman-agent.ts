@@ -120,7 +120,7 @@ const diyCalculatorTool = createTool({
   inputSchema: z.object({
     backendHours: z.number().describe('Estimated backend development hours (this is the base calculation)'),
     features: z.array(z.string()).describe('List of features/requirements from the roadmap'),
-    priority: z.enum(['simple', 'medium', 'complex']).describe('Project complexity (simple: <100 backend hours, medium: 100-300, complex: >300)'),
+    priority: z.enum(['simple', 'medium', 'complex', 'enterprise', 'platform']).describe('Project complexity (simple: <100 hours, medium: 100-300, complex: 300-500, enterprise: 500-800, platform: 800+ hours)'),
     // Configurable stage percentages (defaults from HTML calculator)
     stagePercentages: z.object({
       planning: z.number().default(8).describe('Planning stage percentage'),
@@ -131,17 +131,28 @@ const diyCalculatorTool = createTool({
       qa: z.number().default(5).describe('QA/Testing stage percentage'),
       management: z.number().default(10).describe('Project management percentage')
     }).optional().describe('Stage percentage breakdown (defaults to standard percentages)'),
-    // Configurable hourly rates (defaults based on US market rates)
+    // Configurable hourly rates (defaults based on 2024-2025 enterprise market rates)
     hourlyRates: z.object({
-      planning: z.number().default(100).describe('Planning hourly rate'),
-      design: z.number().default(80).describe('Design hourly rate'),
-      htmlMarkup: z.number().default(60).describe('HTML/Markup hourly rate'),
-      frontend: z.number().default(75).describe('Frontend development hourly rate'),
-      backend: z.number().default(85).describe('Backend development hourly rate'),
-      qa: z.number().default(55).describe('QA/Testing hourly rate'),
-      management: z.number().default(120).describe('Project management hourly rate')
-    }).optional().describe('Hourly rates per role (defaults based on US market rates)'),
-    currency: z.string().default('$').describe('Currency symbol (defaults to USD)')
+      planning: z.number().default(120).describe('Planning/Business Analysis hourly rate'),
+      design: z.number().default(95).describe('UI/UX Design hourly rate'),
+      htmlMarkup: z.number().default(75).describe('HTML/Frontend Markup hourly rate'),
+      frontend: z.number().default(85).describe('Frontend development hourly rate'),
+      backend: z.number().default(100).describe('Backend development hourly rate'),
+      qa: z.number().default(70).describe('QA/Testing hourly rate'),
+      management: z.number().default(140).describe('Project management hourly rate'),
+      // Enterprise specialist rates
+      aiMlEngineer: z.number().default(175).describe('AI/ML Engineer hourly rate'),
+      securitySpecialist: z.number().default(165).describe('Security specialist hourly rate'),
+      enterpriseArchitect: z.number().default(180).describe('Enterprise architect hourly rate'),
+      complianceExpert: z.number().default(190).describe('Compliance expert hourly rate'),
+      devOpsEngineer: z.number().default(130).describe('DevOps engineer hourly rate'),
+      cloudArchitect: z.number().default(155).describe('Cloud architect hourly rate')
+    }).optional().describe('Hourly rates per role (2024-2025 enterprise market rates)'),
+    currency: z.string().default('$').describe('Currency symbol (defaults to USD)'),
+    // Enterprise project enhancements
+    complianceRequirements: z.array(z.string()).optional().describe('Compliance requirements (SOC2, GDPR, HIPAA, etc.)'),
+    enterpriseFeatures: z.array(z.string()).optional().describe('Enterprise features requiring specialists'),
+    isMultiPhase: z.boolean().default(false).describe('Whether this is a multi-phase project')
   }),
   outputSchema: z.object({
     totalProjectHours: z.number(),
@@ -175,7 +186,10 @@ const diyCalculatorTool = createTool({
       priority, 
       stagePercentages: customStagePercentages,
       hourlyRates: customHourlyRates,
-      currency = '$'
+      currency = '$',
+      complianceRequirements = [],
+      enterpriseFeatures = [],
+      isMultiPhase = false
     } = context;
     
     // Use provided percentages or defaults from HTML calculator
@@ -189,23 +203,30 @@ const diyCalculatorTool = createTool({
       'Project Management': customStagePercentages?.management ?? 10
     };
     
-    // Use provided hourly rates or defaults based on US market rates
+    // Enhanced hourly rates based on 2024-2025 enterprise market research
     const hourlyRates: Record<string, number> = {
-      'Planning': customHourlyRates?.planning ?? 100,
-      'Design': customHourlyRates?.design ?? 80,
-      'HTML/Markup': customHourlyRates?.htmlMarkup ?? 60,
-      'Frontend Development': customHourlyRates?.frontend ?? 75,
-      'Backend Development': customHourlyRates?.backend ?? 85,
-      'QA/Testing': customHourlyRates?.qa ?? 55,
-      'Project Management': customHourlyRates?.management ?? 120
+      'Planning': customHourlyRates?.planning ?? 120,
+      'Design': customHourlyRates?.design ?? 95,
+      'HTML/Markup': customHourlyRates?.htmlMarkup ?? 75,
+      'Frontend Development': customHourlyRates?.frontend ?? 85,
+      'Backend Development': customHourlyRates?.backend ?? 100,
+      'QA/Testing': customHourlyRates?.qa ?? 70,
+      'Project Management': customHourlyRates?.management ?? 140,
+      // Enterprise specialist rates for complex projects
+      'AI/ML Engineering': customHourlyRates?.aiMlEngineer ?? 175,
+      'Security Specialist': customHourlyRates?.securitySpecialist ?? 165,
+      'Enterprise Architecture': customHourlyRates?.enterpriseArchitect ?? 180,
+      'Compliance Expert': customHourlyRates?.complianceExpert ?? 190,
+      'DevOps Engineering': customHourlyRates?.devOpsEngineer ?? 130,
+      'Cloud Architecture': customHourlyRates?.cloudArchitect ?? 155
     };
     
     // Calculate total project hours
     // Formula: If Backend = 32% and estimated X backend hours, then Total = (X ÷ 32) × 100
     const totalProjectHours = Math.round((backendHours / 32) * 100 / 10) * 10; // Round to nearest 10
     
-    // Calculate stage breakdown
-    const stageBreakdown = Object.entries(stagePercentages).map(([stage, percentage]) => {
+    // Enhanced stage breakdown with enterprise specialist roles for complex projects
+    let stageBreakdown = Object.entries(stagePercentages).map(([stage, percentage]) => {
       const hours = Math.round((percentage / 100) * totalProjectHours);
       const hourlyRate = hourlyRates[stage];
       const cost = hours * hourlyRate;
@@ -218,6 +239,68 @@ const diyCalculatorTool = createTool({
         cost
       };
     });
+    
+    // Add enterprise specialists for complex projects
+    if (priority === 'enterprise' || priority === 'platform') {
+      const enterpriseRoles = [];
+      
+      // AI/ML Engineering for AI-powered features
+      if (enterpriseFeatures.some(f => f.includes('ai') || f.includes('machine learning') || f.includes('scenario'))) {
+        enterpriseRoles.push({
+          stage: 'AI/ML Engineering',
+          percentage: 15,
+          hours: Math.round(totalProjectHours * 0.15),
+          hourlyRate: hourlyRates['AI/ML Engineering'],
+          cost: Math.round(totalProjectHours * 0.15) * hourlyRates['AI/ML Engineering']
+        });
+      }
+      
+      // Security Specialist for cybersecurity projects
+      if (enterpriseFeatures.some(f => f.includes('security') || f.includes('encryption') || f.includes('audit'))) {
+        enterpriseRoles.push({
+          stage: 'Security Specialist',
+          percentage: 12,
+          hours: Math.round(totalProjectHours * 0.12),
+          hourlyRate: hourlyRates['Security Specialist'],
+          cost: Math.round(totalProjectHours * 0.12) * hourlyRates['Security Specialist']
+        });
+      }
+      
+      // Enterprise Architecture for platform projects
+      if (priority === 'platform' || enterpriseFeatures.some(f => f.includes('microservices') || f.includes('architecture'))) {
+        enterpriseRoles.push({
+          stage: 'Enterprise Architecture',
+          percentage: 8,
+          hours: Math.round(totalProjectHours * 0.08),
+          hourlyRate: hourlyRates['Enterprise Architecture'],
+          cost: Math.round(totalProjectHours * 0.08) * hourlyRates['Enterprise Architecture']
+        });
+      }
+      
+      // Compliance Expert for regulated industries
+      if (complianceRequirements.length > 0) {
+        enterpriseRoles.push({
+          stage: 'Compliance Expert',
+          percentage: 10,
+          hours: Math.round(totalProjectHours * 0.10),
+          hourlyRate: hourlyRates['Compliance Expert'],
+          cost: Math.round(totalProjectHours * 0.10) * hourlyRates['Compliance Expert']
+        });
+      }
+      
+      // DevOps for cloud-native applications
+      if (enterpriseFeatures.some(f => f.includes('cloud') || f.includes('containerized') || f.includes('kubernetes'))) {
+        enterpriseRoles.push({
+          stage: 'DevOps Engineering',
+          percentage: 10,
+          hours: Math.round(totalProjectHours * 0.10),
+          hourlyRate: hourlyRates['DevOps Engineering'],
+          cost: Math.round(totalProjectHours * 0.10) * hourlyRates['DevOps Engineering']
+        });
+      }
+      
+      stageBreakdown = [...stageBreakdown, ...enterpriseRoles];
+    }
     
     // Calculate team requirements (40-hour work weeks)
     const teamRequirements = stageBreakdown.map(({ stage, hours, hourlyRate }) => {
@@ -236,22 +319,31 @@ const diyCalculatorTool = createTool({
     });
     
     const totalSalaryCosts = stageBreakdown.reduce((sum, stage) => sum + stage.cost, 0);
-    const teamSize = Math.ceil(totalProjectHours / (40 * 16)); // Assume 16-week project
+    const teamSize = Math.ceil(totalProjectHours / (40 * (isMultiPhase ? 20 : 16))); // Longer timeline for multi-phase
     
-    // Hidden costs
+    // Enhanced hidden costs with compliance overhead
+    let complianceMultiplier = 1.0;
+    if (complianceRequirements.includes('SOC2')) complianceMultiplier += 0.15;
+    if (complianceRequirements.includes('GDPR')) complianceMultiplier += 0.10;
+    if (complianceRequirements.includes('HIPAA')) complianceMultiplier += 0.20;
+    if (complianceRequirements.includes('PCI')) complianceMultiplier += 0.12;
+    if (complianceRequirements.includes('FedRAMP')) complianceMultiplier += 0.25;
+    
     const hiddenCosts = {
-      recruitmentFees: Math.round(totalSalaryCosts * 0.20),
-      benefitsOverhead: Math.round(totalSalaryCosts * 0.35),
-      equipmentCosts: teamSize * 4500,
-      onboardingCosts: Math.round(totalSalaryCosts * 0.25) // 2-3 months reduced productivity
+      recruitmentFees: Math.round(totalSalaryCosts * 0.20 * complianceMultiplier),
+      benefitsOverhead: Math.round(totalSalaryCosts * 0.35 * complianceMultiplier),
+      equipmentCosts: teamSize * (priority === 'enterprise' || priority === 'platform' ? 6000 : 4500), // Higher equipment costs for enterprise
+      onboardingCosts: Math.round(totalSalaryCosts * 0.25 * complianceMultiplier), // Longer learning curve for complex projects
+      complianceAuditCosts: complianceRequirements.length > 0 ? Math.round(totalSalaryCosts * 0.08) : 0
     };
     
     const totalHiddenCosts = Object.values(hiddenCosts).reduce((sum, cost) => sum + cost, 0);
     const totalDIYCost = totalSalaryCosts + totalHiddenCosts;
     
-    // Timeline calculation
-    const timelineWeeks = Math.ceil(totalProjectHours / (teamSize * 40));
-    const timeline = `${timelineWeeks} weeks with ${teamSize} team members`;
+    // Enhanced timeline calculation for enterprise projects
+    const baseWeeks = Math.ceil(totalProjectHours / (teamSize * 40));
+    const timelineWeeks = isMultiPhase ? baseWeeks * 1.3 : baseWeeks; // 30% longer for multi-phase projects
+    const timeline = `${Math.round(timelineWeeks)} weeks with ${teamSize} team members${isMultiPhase ? ' (multi-phase delivery)' : ''}`;
     
     return {
       totalProjectHours,
@@ -269,10 +361,10 @@ const revenueProjectionsTool = createTool({
   id: 'calculateRevenueProjections',
   description: 'Calculate revenue projections and opportunity costs based on business model and market analysis',
   inputSchema: z.object({
-    businessModel: z.enum(['saas', 'ecommerce', 'b2b', 'mobile']).describe('Type of business model'),
+    businessModel: z.enum(['saas', 'ecommerce', 'b2b', 'mobile', 'enterprise']).describe('Type of business model'),
     productDescription: z.string().describe('Description of the product/service'),
     targetMarket: z.string().describe('Target market description'),
-    geographyFocus: z.string().default('Israel').describe('Primary geographic market'),
+    geographyFocus: z.string().default('United States').describe('Primary geographic market'),
     currency: z.string().default('$').describe('Currency symbol for revenue calculations'),
     // Configurable business model parameters
     marketParameters: z.object({
@@ -291,6 +383,11 @@ const revenueProjectionsTool = createTool({
       // Mobile parameters
       mobileMAU: z.number().default(15000).describe('Monthly Active Users'),
       mobileRevenuePerUser: z.number().default(3.50).describe('Revenue per user per month'),
+      // Enterprise parameters
+      enterpriseDealSize: z.number().default(75000).describe('Average enterprise deal size'),
+      enterpriseDealsPerQuarter: z.number().default(2).describe('Enterprise deals per quarter'),
+      enterpriseWinRate: z.number().default(0.15).describe('Enterprise win rate percentage'),
+      enterpriseSalesCycle: z.number().default(9).describe('Enterprise sales cycle in months'),
       // Market penetration
       marketPenetrationFactor: z.number().default(0.7).describe('Conservative market penetration factor (0.1-1.0)')
     }).optional().describe('Business model specific parameters (uses market defaults if not provided)')
@@ -419,12 +516,13 @@ const revenueProjectionsTool = createTool({
 // OneQ Pricing Calculator Tool
 const oneqPricingTool = createTool({
   id: 'calculateOneQPricing',
-  description: 'Calculate OneQ pricing based on DIY costs with specific percentage reductions',
+  description: 'Calculate OneQ pricing based on DIY costs with enhanced complexity-based pricing for enterprise projects',
   inputSchema: z.object({
     diyCost: z.number().describe('Total DIY implementation cost'),
-    complexity: z.enum(['simple', 'medium', 'complex']).describe('Project complexity level'),
+    complexity: z.enum(['simple', 'medium', 'complex', 'enterprise', 'platform']).describe('Project complexity level'),
     expeditedDelivery: z.boolean().default(false).describe('Whether expedited delivery is requested'),
-    extendedSupport: z.boolean().default(false).describe('Whether extended support is requested')
+    extendedSupport: z.boolean().default(false).describe('Whether extended support is requested'),
+    complianceRequirements: z.array(z.string()).default([]).describe('Compliance requirements that affect pricing')
   }),
   outputSchema: z.object({
     corePrice: z.number(),
@@ -437,9 +535,9 @@ const oneqPricingTool = createTool({
     savingsPercentage: z.number()
   }),
   execute: async ({ context }) => {
-    const { diyCost, complexity, expeditedDelivery, extendedSupport } = context;
+    const { diyCost, complexity, expeditedDelivery, extendedSupport, complianceRequirements } = context;
     
-    // Pricing formula based on complexity
+    // Enhanced pricing formula based on complexity and risk
     let pricingMultiplier = 0.35; // Default 35% of DIY cost
     switch (complexity) {
       case 'simple':
@@ -451,26 +549,43 @@ const oneqPricingTool = createTool({
       case 'complex':
         pricingMultiplier = 0.40; // 40% of DIY cost
         break;
+      case 'enterprise':
+        pricingMultiplier = 0.42; // 42% of DIY cost (higher due to compliance requirements)
+        break;
+      case 'platform':
+        pricingMultiplier = 0.45; // 45% of DIY cost (highest due to complexity and multi-phase nature)
+        break;
+    }
+    
+    // Additional compliance premium for regulated industries
+    if (complianceRequirements.length > 0) {
+      pricingMultiplier += 0.02; // Additional 2% for compliance overhead
     }
     
     const baseCorePrice = Math.round(diyCost * pricingMultiplier / 1000) * 1000; // Round to nearest $1,000 for consistency
     
-    // Modular options
+    // Enhanced modular options for enterprise projects
     const modularOptions = [
       {
         name: 'Core Implementation',
-        description: '12-week implementation with basic support',
+        description: complexity === 'platform' ? '16-week phased implementation with enterprise support' : 
+                     complexity === 'enterprise' ? '14-week implementation with compliance support' :
+                     '12-week implementation with basic support',
         price: baseCorePrice
       },
       {
         name: 'Extended Support',
-        description: '6 months additional support and maintenance',
-        price: Math.round(baseCorePrice * 0.25 / 1000) * 1000 // 25% of core price
+        description: complexity === 'enterprise' || complexity === 'platform' ? 
+                     '12 months enterprise support and maintenance' : 
+                     '6 months additional support and maintenance',
+        price: Math.round(baseCorePrice * (complexity === 'enterprise' || complexity === 'platform' ? 0.35 : 0.25) / 1000) * 1000
       },
       {
         name: 'Expedited Delivery',
-        description: 'Rush implementation in 8 weeks instead of 12',
-        price: Math.round(baseCorePrice * 0.20 / 1000) * 1000 // 20% surcharge
+        description: complexity === 'platform' ? 'Rush implementation in 12 weeks instead of 16' :
+                     complexity === 'enterprise' ? 'Rush implementation in 10 weeks instead of 14' :
+                     'Rush implementation in 8 weeks instead of 12',
+        price: Math.round(baseCorePrice * (complexity === 'enterprise' || complexity === 'platform' ? 0.25 : 0.20) / 1000) * 1000
       },
       {
         name: 'Additional Features',
@@ -478,6 +593,15 @@ const oneqPricingTool = createTool({
         price: Math.round(baseCorePrice * 0.30 / 1000) * 1000 // 30% of core price
       }
     ];
+    
+    // Add enterprise-specific options for complex projects
+    if (complexity === 'enterprise' || complexity === 'platform') {
+      modularOptions.push({
+        name: 'Compliance Certification',
+        description: 'SOC2, GDPR, or other compliance certification assistance',
+        price: Math.round(baseCorePrice * 0.15 / 1000) * 1000 // 15% of core price
+      });
+    }
     
     // Calculate total with selected options
     let totalPrice = baseCorePrice;
@@ -503,56 +627,77 @@ const oneqPricingTool = createTool({
 // Input normalization tool for consistent roadmap analysis
 const inputNormalizationTool = createTool({
   id: 'normalizeRoadmapInput',
-  description: 'Standardizes roadmap and PRD inputs for consistent analysis and pricing',
+  description: 'Standardizes roadmap and PRD inputs for consistent analysis and pricing, now with enhanced enterprise project detection',
   inputSchema: z.object({
     roadmapText: z.string().describe('Raw roadmap or PRD text'),
-    projectType: z.enum(['webapp', 'mobile', 'api', 'platform', 'saas']).optional().describe('Project type classification'),
-    industry: z.string().optional().describe('Industry or domain (e.g., fintech, healthcare, e-commerce)')
+    projectType: z.enum(['webapp', 'mobile', 'api', 'platform', 'saas', 'enterprise']).optional().describe('Project type classification'),
+    industry: z.string().optional().describe('Industry or domain (e.g., fintech, healthcare, e-commerce, cybersecurity)')
   }),
   outputSchema: z.object({
     normalizedFeatures: z.array(z.string()).describe('Standardized list of core features'),
-    backendComplexity: z.enum(['simple', 'medium', 'complex']).describe('Standardized complexity assessment'),
+    backendComplexity: z.enum(['simple', 'medium', 'complex', 'enterprise', 'platform']).describe('Enhanced complexity assessment including enterprise tiers'),
     estimatedBackendHours: z.number().describe('Normalized backend hours estimate (rounded to nearest 10)'),
-    businessModel: z.enum(['saas', 'ecommerce', 'b2b', 'mobile']).describe('Identified business model'),
+    businessModel: z.enum(['saas', 'ecommerce', 'b2b', 'mobile', 'enterprise']).describe('Identified business model'),
     marketCategory: z.string().describe('Standardized market category'),
-    keyDifferentiators: z.array(z.string()).describe('Main differentiating features')
+    keyDifferentiators: z.array(z.string()).describe('Main differentiating features'),
+    isMultiPhase: z.boolean().describe('Whether project requires multi-phase implementation'),
+    phaseCount: z.number().describe('Number of implementation phases (1-4)'),
+    complianceRequirements: z.array(z.string()).describe('Identified compliance needs (SOC2, GDPR, HIPAA, etc.)'),
+    enterpriseFeatures: z.array(z.string()).describe('Enterprise-specific features detected')
   }),
   execute: async ({ context }) => {
     const { roadmapText, projectType, industry } = context;
     
-    // Standardize feature extraction
+    // Enhanced feature extraction including enterprise features
     const featureKeywords = [
+      // Standard features
       'authentication', 'user management', 'dashboard', 'reporting', 'payments', 
       'notifications', 'api', 'database', 'search', 'analytics', 'integration',
       'mobile app', 'web app', 'admin panel', 'messaging', 'file upload',
-      'real-time', 'automation', 'machine learning', 'ai', 'blockchain'
+      'real-time', 'automation', 'machine learning', 'ai', 'blockchain',
+      // Enterprise features
+      'simulation', 'scenario engine', 'benchmarking', 'war room', 'crisis management',
+      'incident response', 'certification system', 'audit logging', 'compliance',
+      'multi-tenant', 'sso', 'single sign-on', 'role-based access', 'rbac',
+      'microservices', 'containerized', 'orchestration', 'load balancing',
+      'disaster recovery', 'backup', 'replication', 'monitoring', 'alerting',
+      'encryption', 'security', 'penetration testing', 'vulnerability assessment'
     ];
     
     const normalizedFeatures = featureKeywords.filter(feature => 
       roadmapText.toLowerCase().includes(feature.toLowerCase())
     );
     
-    // Standardize complexity assessment based on feature count and keywords
+    // Enhanced complexity assessment with enterprise tiers
     const complexityIndicators = {
       simple: ['basic', 'simple', 'mvp', 'prototype', 'minimal'],
       medium: ['standard', 'typical', 'moderate', 'extended'],
-      complex: ['enterprise', 'advanced', 'sophisticated', 'complex', 'ai', 'machine learning', 'blockchain']
+      complex: ['enterprise', 'advanced', 'sophisticated', 'complex', 'ai', 'machine learning'],
+      enterprise: ['enterprise-grade', 'mission-critical', 'large-scale', 'global', 'multi-region', 'compliance', 'soc2', 'gdpr', 'hipaa'],
+      platform: ['platform', 'ecosystem', 'multi-phase', 'phased', 'architecture', 'infrastructure', 'framework', 'sdk', 'api gateway']
     };
     
-    let backendComplexity: 'simple' | 'medium' | 'complex' = 'medium';
+    let backendComplexity: 'simple' | 'medium' | 'complex' | 'enterprise' | 'platform' = 'medium';
     const textLower = roadmapText.toLowerCase();
     
-    if (complexityIndicators.complex.some(indicator => textLower.includes(indicator))) {
+    // Check for platform-level complexity first (most complex)
+    if (complexityIndicators.platform.some(indicator => textLower.includes(indicator))) {
+      backendComplexity = 'platform';
+    } else if (complexityIndicators.enterprise.some(indicator => textLower.includes(indicator))) {
+      backendComplexity = 'enterprise';
+    } else if (complexityIndicators.complex.some(indicator => textLower.includes(indicator))) {
       backendComplexity = 'complex';
     } else if (complexityIndicators.simple.some(indicator => textLower.includes(indicator))) {
       backendComplexity = 'simple';
     }
     
-    // Standardized backend hour estimation (consistent formula)
+    // Enhanced backend hour estimation for enterprise projects
     const baseHours = {
       simple: 80,
       medium: 160,
-      complex: 320
+      complex: 320,
+      enterprise: 500,    // Enterprise applications
+      platform: 800      // Complex multi-phase platforms like Code Blue
     };
     
     const featureMultiplier = Math.max(1, normalizedFeatures.length * 0.1);
@@ -561,15 +706,16 @@ const inputNormalizationTool = createTool({
     // Round to nearest 10 for consistency
     const estimatedBackendHours = Math.round(rawHours / 10) * 10;
     
-    // Standardize business model identification
+    // Enhanced business model identification
     const businessModelKeywords = {
       saas: ['subscription', 'saas', 'monthly', 'recurring', 'tenant'],
       ecommerce: ['store', 'shop', 'cart', 'payment', 'product', 'marketplace'],
       b2b: ['enterprise', 'business', 'b2b', 'corporate', 'client'],
-      mobile: ['mobile', 'app', 'ios', 'android', 'smartphone']
+      mobile: ['mobile', 'app', 'ios', 'android', 'smartphone'],
+      enterprise: ['enterprise software', 'enterprise platform', 'enterprise solution', 'large organization', 'multi-location']
     };
     
-    let businessModel: 'saas' | 'ecommerce' | 'b2b' | 'mobile' = 'saas';
+    let businessModel: 'saas' | 'ecommerce' | 'b2b' | 'mobile' | 'enterprise' = 'saas';
     for (const [model, keywords] of Object.entries(businessModelKeywords)) {
       if (keywords.some(keyword => textLower.includes(keyword))) {
         businessModel = model as any;
@@ -577,14 +723,63 @@ const inputNormalizationTool = createTool({
       }
     }
     
-    // Standardize market category
-    const marketCategory = industry || 'Technology';
+    // Multi-phase detection
+    const phaseIndicators = ['phase', 'phases', 'stage', 'stages', 'milestone', 'roadmap', 'timeline'];
+    const isMultiPhase = phaseIndicators.some(indicator => textLower.includes(indicator));
     
-    // Extract key differentiators (standardized)
+    // Extract phase count
+    const phaseMatches = textLower.match(/(\d+)\s*(?:phase|stage|milestone)/g);
+    let phaseCount = 1;
+    if (phaseMatches && phaseMatches.length > 0) {
+      const numbers = phaseMatches.map(match => parseInt(match.match(/\d+/)?.[0] || '1'));
+      phaseCount = Math.max(...numbers);
+    } else if (isMultiPhase) {
+      phaseCount = backendComplexity === 'platform' ? 4 : backendComplexity === 'enterprise' ? 3 : 2;
+    }
+    
+    // Compliance requirements detection
+    const complianceKeywords = {
+      'SOC2': ['soc2', 'soc 2', 'service organization control'],
+      'GDPR': ['gdpr', 'general data protection regulation', 'european privacy'],
+      'HIPAA': ['hipaa', 'health insurance portability', 'healthcare privacy'],
+      'PCI': ['pci', 'payment card industry', 'credit card'],
+      'ISO27001': ['iso27001', 'iso 27001', 'information security management'],
+      'FedRAMP': ['fedramp', 'federal risk', 'government cloud'],
+      'CCPA': ['ccpa', 'california consumer privacy act']
+    };
+    
+    const complianceRequirements = Object.entries(complianceKeywords)
+      .filter(([_, keywords]) => keywords.some(keyword => textLower.includes(keyword)))
+      .map(([compliance, _]) => compliance);
+    
+    // Enterprise features detection
+    const enterpriseKeywords = [
+      'ai-powered', 'machine learning', 'artificial intelligence', 'scenario engine',
+      'real-time analytics', 'multi-tenant', 'role-based access', 'audit logging',
+      'disaster recovery', 'high availability', 'load balancing', 'auto-scaling',
+      'microservices', 'containerized', 'kubernetes', 'docker', 'orchestration',
+      'api gateway', 'service mesh', 'monitoring', 'observability', 'logging',
+      'encryption', 'security scanning', 'vulnerability assessment', 'penetration testing'
+    ];
+    
+    const enterpriseFeatures = enterpriseKeywords.filter(feature => 
+      textLower.includes(feature.replace('-', ' '))
+    );
+    
+    // Standardize market category
+    const marketCategory = industry || (
+      textLower.includes('cyber') || textLower.includes('security') ? 'Cybersecurity' :
+      textLower.includes('health') || textLower.includes('medical') ? 'Healthcare' :
+      textLower.includes('finance') || textLower.includes('bank') ? 'Financial Services' :
+      'Technology'
+    );
+    
+    // Extract key differentiators (enhanced)
     const differentiatorKeywords = [
       'ai-powered', 'real-time', 'automated', 'secure', 'scalable',
-      'user-friendly', 'mobile-first', 'cloud-based', 'integration',
-      'analytics', 'personalized', 'instant', 'collaborative'
+      'user-friendly', 'mobile-first', 'cloud-based', 'cloud-native', 'integration',
+      'analytics', 'personalized', 'instant', 'collaborative', 'multi-tenant',
+      'enterprise-grade', 'mission-critical', 'high-availability', 'disaster-recovery'
     ];
     
     const keyDifferentiators = differentiatorKeywords.filter(diff => 
@@ -597,7 +792,11 @@ const inputNormalizationTool = createTool({
       estimatedBackendHours,
       businessModel,
       marketCategory,
-      keyDifferentiators
+      keyDifferentiators,
+      isMultiPhase,
+      phaseCount,
+      complianceRequirements,
+      enterpriseFeatures
     };
   }
 });
@@ -605,12 +804,12 @@ const inputNormalizationTool = createTool({
 // Consistency validation tool
 const consistencyValidationTool = createTool({
   id: 'validateConsistency',
-  description: 'Validates that calculations follow consistent rounding rules and methodology',
+  description: 'Validates that calculations follow consistent rounding rules and methodology for all complexity tiers',
   inputSchema: z.object({
     normalizedInputs: z.object({
       backendHours: z.number(),
-      complexity: z.enum(['simple', 'medium', 'complex']),
-      businessModel: z.enum(['saas', 'ecommerce', 'b2b', 'mobile'])
+      complexity: z.enum(['simple', 'medium', 'complex', 'enterprise', 'platform']),
+      businessModel: z.enum(['saas', 'ecommerce', 'b2b', 'mobile', 'enterprise'])
     }),
     calculationResults: z.object({
       diyCost: z.number(),
@@ -665,11 +864,13 @@ const consistencyValidationTool = createTool({
       });
     }
     
-    // Validate OneQ pricing follows expected percentages
+    // Enhanced OneQ pricing validation for all complexity tiers
     const expectedMultipliers = {
-      simple: 0.35,
-      medium: 0.37,
-      complex: 0.40
+      simple: 0.35,     // 35% of DIY cost
+      medium: 0.37,     // 37% of DIY cost
+      complex: 0.40,    // 40% of DIY cost
+      enterprise: 0.42, // 42% of DIY cost (higher due to compliance requirements)
+      platform: 0.45    // 45% of DIY cost (highest due to complexity and risk)
     };
     
     const expectedOneQPrice = Math.round(calculationResults.diyCost * expectedMultipliers[normalizedInputs.complexity] / 1000) * 1000;
