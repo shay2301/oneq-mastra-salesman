@@ -174,7 +174,8 @@ const diyCalculatorTool = createTool({
       recruitmentFees: z.number(),
       benefitsOverhead: z.number(),
       equipmentCosts: z.number(),
-      onboardingCosts: z.number()
+      onboardingCosts: z.number(),
+      complianceAuditCosts: z.number().describe('Compliance audit and certification costs')
     }),
     totalDIYCost: z.number(),
     timeline: z.string()
@@ -482,6 +483,19 @@ const revenueProjectionsTool = createTool({
         marketAnalysisBasis = `Mobile app in ${geographyFocus}: ${params.mau} MAU at ${currency}${params.revenuePerUser}/user/month`;
         businessModelMetrics = { 
           averageRevenuePerUser: params.revenuePerUser 
+        };
+        break;
+        
+      case 'enterprise':
+        // Enterprise software with larger deal sizes and quarterly cycles
+        const enterpriseDealSize = marketParameters?.enterpriseDealSize ?? 75000;
+        const enterpriseDealsPerQuarter = marketParameters?.enterpriseDealsPerQuarter ?? 2;
+        const enterpriseWinRate = marketParameters?.enterpriseWinRate ?? 0.15;
+        monthlyRevenuePotential = Math.round((enterpriseDealSize * enterpriseDealsPerQuarter * enterpriseWinRate) / 3); // Convert quarterly to monthly
+        marketAnalysisBasis = `Enterprise software in ${geographyFocus}: ${enterpriseDealsPerQuarter} deals/quarter at ${currency}${enterpriseDealSize} average with ${enterpriseWinRate * 100}% win rate`;
+        businessModelMetrics = { 
+          dealSize: enterpriseDealSize, 
+          winRate: enterpriseWinRate 
         };
         break;
     }
