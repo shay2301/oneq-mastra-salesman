@@ -1,0 +1,364 @@
+# Cursor Rules for Mastra Single-Agent Sales System
+
+## Project Overview
+This is a Mastra-based single-agent sales system that analyzes roadmaps/PRDs and creates sales proposals using comprehensive calculation tools.
+
+### About OneQ
+OneQ is a development services company that provides faster, more cost-effective alternatives to DIY development:
+- **Value Proposition**: 60%+ cost savings compared to in-house development
+- **Time Benefits**: 12-16 weeks faster time-to-market
+- **Service Model**: Professional implementation with ongoing support
+- **Pricing Strategy**: Typically 35-45% of DIY costs depending on complexity
+- **Ethical Standards**: No manipulative pressure tactics, focus on genuine value
+- **Target Market**: Companies with complex roadmaps/PRDs who need expert implementation
+
+### Sales System Purpose
+The single agent system calculates:
+1. **DIY Implementation Costs** - Full cost analysis including hidden expenses
+2. **OneQ Pricing** - Competitive pricing based on complexity and value
+3. **Savings Analysis** - Clear comparison showing cost and time benefits
+4. **Revenue Projections** - Opportunity cost of delays and first-mover advantages
+5. **Professional Presentation** - Compelling proposals that close deals
+
+### User Experience Requirements
+**CRITICAL**: The system MUST provide a simple, seamless experience:
+
+1. **Simple Startup**: `npm run dev` starts everything automatically
+2. **Standard Mastra UI**: Use http://localhost:4111/agents interface
+3. **Single Input Method**: User provides roadmap/PRD and business analysis text
+4. **Comprehensive Processing**: Agent uses all calculation tools automatically
+5. **Complete Output**: User receives full sales proposal with calculations in one response
+
+**The user should NEVER need to:**
+- Manually configure tools or workflows
+- Understand the internal calculation process
+- Deal with technical details or tool failures
+- Run complex scripts or examples
+
+**The system should automatically:**
+- Use all calculation tools in proper sequence
+- Validate calculations for consistency
+- Present results as professional sales proposals
+- Handle errors gracefully with meaningful feedback
+
+## Systematic Analysis Requirements
+
+### Holistic System Understanding
+**CRITICAL**: When asked any question about this system, you MUST:
+
+1. **Read All Relevant Components First**:
+   - `src/mastra/index.ts` - Main configuration and agent setup
+   - `src/mastra/agents/` - Sales agent definition and instructions
+   - `src/mastra/tools/` - All calculation tools and their logic
+   - `src/mastra/workflows/` - Workflow definitions (if any)
+
+2. **Understand Tool Integration**:
+   - How tools work together in sequence
+   - Input/output dependencies between tools
+   - Validation and consistency checking
+   - Error handling across the tool chain
+
+3. **Think About the Complete Flow**:
+   - User input → Agent processing → Tool sequence → Final proposal
+   - Token usage optimization within single agent
+   - Error handling and graceful degradation
+   - Professional output formatting
+
+4. **Consider Impact Analysis**:
+   - How changes affect tool usage and calculations
+   - Dependencies between calculation steps
+   - User experience implications
+   - Performance and token usage impact
+
+**Never answer questions about individual components without understanding their role in the complete system.**
+
+## Architecture Guidelines
+
+### Single-Agent Design
+- One comprehensive agent with all necessary calculation tools
+- Clear, sequential tool usage instructions
+- Proper token management within 20k limits
+- Comprehensive error handling and validation
+
+### File Structure
+```
+src/mastra/
+├── agents/           # Main sales agent
+├── tools/           # All calculation tools
+├── workflows/       # Optional workflow definitions
+└── index.ts        # Main Mastra configuration
+```
+
+### Agent Design Patterns
+- Include comprehensive instructions for tool usage
+- Use TypeScript with proper type annotations
+- Include memory storage with LibSQLStore
+- Set appropriate token limits and temperature settings
+- **CRITICAL**: Never use `experimental_output` - it prevents tool usage
+- Ensure instructions explicitly require tool usage for ALL analysis tasks
+- **REASONING REQUIREMENT**: Agent must use reasoning capabilities at medium level for complex analysis
+- **MEMORY REQUIREMENT**: Agent must actively use memory features to store and recall important context across interactions
+- Enable memory persistence for customer interactions, calculations, and proposal history
+
+### Tool Development
+- Use `createTool` from @mastra/core/tools
+- Include proper input/output schemas with Zod
+- Implement error handling in tool execution
+- Design tools to work together in sequence
+- Ensure calculations align with OneQ's business model and pricing strategy
+- Include proper validation for ethical sales practices
+- **CURRENCY REQUIREMENT**: All financial calculations must use USD ($) - never local currencies
+- Convert any input rates/costs to USD before processing
+
+## Code Style
+
+### TypeScript
+- Use strict TypeScript with proper typing
+- Avoid `any` types unless absolutely necessary
+- Use proper async/await patterns
+- Include proper error handling
+
+### Naming Conventions
+- Use descriptive names for agents, tools, and workflows
+- Follow camelCase for variables and functions
+- Use PascalCase for classes and types
+- Use kebab-case for file names
+
+### Import Organization
+- Group imports: external packages, @mastra packages, local imports
+- Use absolute imports for cross-module dependencies
+- Keep imports organized and remove unused ones
+
+## Mastra-Specific Rules
+
+### Agent Configuration
+- Always include memory storage with LibSQLStore
+- Set appropriate defaultGenerateOptions (maxTokens under 20k)
+- Use anthropic models consistently (claude-sonnet-4-20250514)
+- **CRITICAL GENERATION SETTINGS**: Always use temperature: 0.7 and topP: 0.8 for optimal balance of creativity and consistency
+- Include proper evaluation metrics when needed
+- **CRITICAL**: Never use `experimental_output` on agents that need tools
+- Ensure agent instructions explicitly require tool usage for all analysis tasks
+- Include ethical guardrails in sales-related agents
+- **REASONING CONFIG**: Configure reasoning at medium level for optimal analysis depth
+- **MEMORY CONFIG**: Enable memory features for context persistence and customer relationship tracking
+- Store key information: customer details, previous calculations, proposal outcomes, follow-up requirements
+
+### Model Rate Limits
+- **CRITICAL**: Claude 4 Sonnet has a 20k token per minute rate limit that MUST be respected
+- Keep single agent calls under 20k tokens total
+- Optimize input processing (truncate if necessary)
+- Use reasonable thinking token budgets (minimum 1024)
+- Monitor token usage and implement input limits
+- Consider token budgets when setting maxTokens and thinking budgets
+- Log token usage for monitoring and optimization
+
+### Tool Integration
+- **MANDATORY TOOL SEQUENCE**: Agent must use tools in specific order:
+  1. Input normalization (analyze roadmap)
+  2. DIY cost calculation
+  3. Revenue projections
+  4. OneQ pricing calculation
+  5. Consistency validation
+  6. Professional presentation
+- Tools should be stateless and reusable
+- Include proper input validation
+- Provide meaningful error messages
+- Use consistent output formats
+- **NO CALCULATIONS WITHOUT TOOLS**: Agent must never estimate or calculate without using tools
+
+## Performance Guidelines
+- Optimize token usage within single agent
+- Use efficient tool sequencing
+- Implement proper input length management
+- Monitor and log performance metrics
+- Ensure response times under 60 seconds
+
+## Error Handling
+- Implement graceful degradation
+- Provide meaningful error messages to users
+- Log errors appropriately for debugging
+- Include validation at each tool step
+- Fail gracefully if tools are unavailable
+
+## OneQ Business Rules
+
+### Sales Calculation Standards
+- **Currency Standard**: ALL calculations must be performed and displayed in USD ($)
+- **DIY Cost Calculation**: Include all hidden costs (2x base development cost)
+- **OneQ Pricing**: 35-45% of DIY cost based on complexity
+- **Revenue Projections**: Conservative estimates based on business model
+- **Time Savings**: 12-16 weeks faster than DIY implementation
+- **Savings Presentation**: Always show percentage and absolute savings
+- **No Currency Conversion**: Never present calculations in local currencies (NIS, EUR, etc.)
+
+### Ethical Sales Practices
+- **No Manipulative Pressure**: Avoid artificial urgency or fear tactics
+- **Truthful Representations**: Accurate capability and timeline claims
+- **Professional Tone**: Focus on value proposition and genuine benefits
+- **Transparent Pricing**: Clear breakdown of costs and savings
+- **Respect User Autonomy**: Present options without coercion
+
+### Quality Standards
+- **Accurate Calculations**: All pricing must be mathematically sound
+- **Consistent Messaging**: Align with OneQ's value proposition
+- **Professional Presentation**: Sales proposals must be compelling and clear
+- **Token Efficiency**: Stay within rate limits while providing comprehensive analysis
+- **Tool Usage Enforcement**: Never allow calculations without using tools
+
+## Development Workflow
+
+### Problem-Solving Approach
+1. **System-Wide Analysis**: Read all relevant files before making changes
+2. **Impact Assessment**: Consider how changes affect tool integration
+3. **Tool Sequence Validation**: Ensure all calculation steps work together
+4. **Testing Strategy**: Verify agent uses all tools correctly
+5. **User Experience**: Maintain simple input/output while ensuring comprehensive analysis
+6. **MASTRA DOCUMENTATION**: When implementing Mastra features or solving issues, search Mastra documentation and examples first
+   - Use Mastra docs for agent, tool, memory, and workflow implementation guidance
+   - Reference Mastra examples for best practices and code patterns
+   - Check Mastra changelogs for recent updates and breaking changes
+
+### User Experience Standards
+**The golden rule**: Complex calculation logic must be completely invisible to users.
+
+**Standard Workflow (from user perspective):**
+1. `npm run dev` 
+2. Go to http://localhost:4111/agents
+3. Select "OneQ Sales Agent"
+4. Input: "Here's our roadmap, PRD, and business analysis: [content]"
+5. Get: Complete sales proposal with calculations
+
+**Technical Implementation Requirements:**
+- Sales Agent must automatically use all calculation tools in sequence
+- Tool failures must be handled gracefully
+- Error messages must be user-friendly, not technical
+- Processing time should be reasonable (under 60 seconds)
+- Calculations must be accurate and consistent
+
+### Debugging Guidelines
+- Check that agent uses ALL required tools
+- Verify tool sequence and data flow
+- Monitor token usage and limits
+- Validate calculation accuracy against OneQ business rules
+- Test error handling for tool failures
+- **MASTRA DOCS REFERENCE**: Search Mastra documentation and examples when troubleshooting
+  - Check agent configuration patterns in Mastra docs
+  - Review memory and reasoning implementation examples
+  - Verify tool integration best practices from Mastra examples
+
+## Agent Instructions Template
+
+### Required Instruction Pattern
+```typescript
+instructions: `
+CRITICAL: You MUST use your calculation tools for EVERY analysis.
+Do NOT provide any calculations or pricing without using the tools.
+
+CURRENCY STANDARD: ALL financial figures must be calculated and presented in USD ($).
+Never use local currencies (NIS, EUR, etc.) in calculations or final presentations.
+
+REASONING: Use medium-level reasoning to analyze complex roadmaps and business requirements.
+Think through implications, dependencies, and strategic considerations.
+
+MEMORY: Store and recall important context including:
+- Customer details and business context
+- Previous calculations and proposals
+- Follow-up requirements and next steps
+- Interaction history for relationship building
+
+MANDATORY WORKFLOW (you MUST follow this sequence):
+1. FIRST: Use normalizeRoadmapInput tool to analyze the roadmap text
+2. SECOND: Use calculateDIYCost tool to calculate their DIY implementation costs  
+3. THIRD: Use calculateRevenueProjections tool to project their revenue potential
+4. FOURTH: Use calculateOneQPricing tool to price OneQ's solution
+5. FIFTH: Use validateConsistency tool to ensure calculations are consistent
+6. FINALLY: Create compelling sales presentation from the tool results
+
+NEVER estimate or guess numbers - ALWAYS use the tools.
+ALL calculations must be in USD ($) - no exceptions.
+`,
+// CRITICAL GENERATION SETTINGS: Always include these in defaultGenerateOptions
+model: anthropic('claude-3-5-sonnet-20241022'),
+defaultGenerateOptions: {
+  temperature: 0.7,  // Optimal balance of creativity and consistency
+  topP: 0.8,         // Controlled randomness for professional output
+  maxTokens: 2000    // Sufficient for comprehensive responses
+}
+`
+```
+
+## User Experience Principles
+
+### Simplicity First
+- **One Command Startup**: `npm run dev` should start the entire system
+- **Standard Interface**: Use Mastra's built-in agent UI at http://localhost:4111/agents
+- **Single Input**: Users provide roadmap/PRD text and get complete proposals
+- **No Technical Exposure**: Users never see tool details or calculation steps
+
+### Input Format
+Users should be able to provide input in natural language like:
+```
+"Here's our roadmap for Q2-Q3 and our business analysis:
+
+[Roadmap/PRD content]
+[Business analysis]
+[Customer context]
+
+Please create a complete sales proposal."
+```
+
+### Expected Output
+The system should return:
+- Complete professional sales proposal
+- Detailed cost calculations (DIY vs OneQ)
+- Revenue projections and opportunity costs
+- Clear savings breakdown with percentages
+- Timeline comparisons
+- Strong call to action
+
+### Behind-the-Scenes Processing
+While maintaining simple UX, the agent leverages:
+- Comprehensive calculation tool chain
+- Input normalization and validation
+- Consistent pricing methodology
+- Professional presentation formatting
+- Ethical sales practices enforcement
+
+## Token Management Strategy
+
+### Single Agent Optimization
+- **Input Management**: Truncate long inputs to prevent rate limit violations
+- **Tool Efficiency**: Use tools sequentially to distribute processing
+- **Output Control**: Set appropriate maxTokens (typically 1500-2000)
+- **Thinking Budget**: Minimum 1024 tokens for complex analysis
+- **Error Prevention**: Monitor and prevent rate limit violations
+
+### Rate Limit Compliance
+- Stay well under 20k tokens per minute organizational limit
+- Implement delays if processing multiple requests
+- Truncate inputs aggressively if needed (max 3000-5000 characters)
+- Log token usage for monitoring and optimization
+
+## Best Practices
+
+### Agent Development
+- Test with various roadmap complexities
+- Verify all tools are used in every analysis
+- Ensure professional output quality
+- Validate calculation accuracy
+- Test error handling scenarios
+
+### Performance Optimization
+- Keep tool execution efficient
+- Minimize redundant processing
+- Optimize token usage
+- Ensure reasonable response times
+- Monitor system performance
+
+### Quality Assurance
+- Verify OneQ business rules compliance
+- Check ethical sales practice adherence
+- Validate calculation accuracy
+- Test user experience flow
+- Ensure error handling works properly
