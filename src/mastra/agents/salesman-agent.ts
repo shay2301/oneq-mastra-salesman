@@ -1,4 +1,5 @@
 import { anthropic } from '@ai-sdk/anthropic';
+import { openrouter } from '@openrouter/ai-sdk-provider';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 
@@ -16,6 +17,28 @@ interface AGUIEvent {
   type: string;
   data: any;
   timestamp?: number;
+}
+
+// Model Provider Configuration
+function getModelProvider() {
+  // Check if OpenRouter API key is available and preferred
+  if (process.env.OPENROUTER_API_KEY) {
+    // Use Claude Sonnet 4 on OpenRouter (latest and most powerful)
+    const modelName = process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-4';
+    console.log(`🚀 Using OpenRouter with model: ${modelName}`);
+    
+    return openrouter(modelName);
+  }
+  
+  // Fall back to direct Anthropic API
+  if (process.env.ANTHROPIC_API_KEY) {
+    console.log('🚀 Using direct Anthropic API with Claude Sonnet');
+    return anthropic('claude-3-5-sonnet-20241022');
+  }
+  
+  // Default fallback
+  console.warn('⚠️ No API keys found, using Anthropic default');
+  return anthropic('claude-3-5-sonnet-20241022');
 }
 
 // FIXED: Simplified memory configuration following working examples
@@ -103,8 +126,8 @@ Use exact numbers from tools. Keep supporting details concise.
 Remember: OneQ's 90-minute sessions provide insights that create momentum-based urgency for decision making.
 `,
   
-  // FIXED: Switch to Claude 3.5 Sonnet for higher rate limits
-  model: anthropic('claude-3-5-sonnet-20241022'),
+  // DYNAMIC: Use OpenRouter if available, otherwise Anthropic direct
+  model: getModelProvider(),
   
   // FIXED: Simplified memory configuration
   memory: salesMemory,
